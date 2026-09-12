@@ -12,6 +12,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.net.URL;
@@ -103,6 +106,22 @@ public class MainController implements Initializable {
         diffView.clear();
         try{
             fileList.setItems(FXCollections.observableArrayList(gitService.getChangedFiles(commit.fullHash())));
+        }catch (Exception e){
+            statusLabel.setText("Error: " + e.getMessage());
+        }
+   }
+
+   @FXML
+   private void handleShowChanges(){
+        try{
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/githive/views/changes.fxml"));
+            Scene scene = new Scene(loader.load(), 700, 500);
+            ChangesController ctrl = loader.getController();
+            ctrl.setGitService(gitService);
+            Stage stage = new Stage();
+            stage.setTitle("Changes");
+            stage.setScene(scene);
+            stage.show();
         }catch (Exception e){
             statusLabel.setText("Error: " + e.getMessage());
         }

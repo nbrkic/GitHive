@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.githive.controller.ChangesController"
+      style="-fx-background-color: #0d1b2a; -fx-padding: 16;">
+
+    <Label text="CHANGES" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
+
+    <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
+
+        <VBox spacing="6">
+            <Label text="Unstaged" style="-fx-text-fill: #cdd9e5; -fx-font-size: 12;"/>
+            <ListView fx:id="unstagedList" VBox.vgrow="ALWAYS"
+                      style="-fx-background-color: #0a1628;"/>
+            <Button fx:id="stageBtn" text="Stage Selected" onAction="#handleStage"
+                    maxWidth="Infinity"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <Label text="Staged" style="-fx-text-fill: #cdd9e5; -fx-font-size: 12;"/>
+            <ListView fx:id="stagedList" VBox.vgrow="ALWAYS"
+                      style="-fx-background-color: #0a1628;"/>
+            <TextField fx:id="commitMsg" promptText="Commit message"/>
+            <Button fx:id="commitBtn" text="Commit" onAction="#handleCommit"
+                    styleClass="accent" maxWidth="Infinity"/>
+        </VBox>
+
+    </SplitPane>
+
+</VBox>

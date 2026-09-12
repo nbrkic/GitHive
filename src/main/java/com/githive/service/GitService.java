@@ -15,6 +15,8 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.dircache.DirCache;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -106,6 +108,18 @@ public class GitService {
             }
         }
         return "";
+    }
+
+    public Status getStatus() throws GitAPIException{
+        return git.status().call();
+    }
+
+    public void stageFile(String path) throws GitAPIException{
+        git.add().addFilepattern(path).call();
+    }
+
+    public void commit(String message) throws GitAPIException{
+        git.commit().setMessage(message).call();
     }
 
     private AbstractTreeIterator treeParser(Repository repo, RevCommit commit) throws Exception {
