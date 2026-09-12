@@ -2,6 +2,7 @@ package com.githive.controller;
 
 import com.githive.model.CommitInfo;
 import com.githive.service.GitService;
+import com.githive.service.RecentReposService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -11,6 +12,7 @@ import javafx.stage.DirectoryChooser;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -25,9 +27,11 @@ public class MainController implements Initializable {
     @FXML private Label statusLabel;
     @FXML private ListView<String> fileList;
     @FXML private TextArea  diffView;
+    @FXML private MenuButton recentMenu;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
+    private final RecentReposService recentRepos = new RecentReposService();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -43,6 +47,16 @@ public class MainController implements Initializable {
         fileList.getSelectionModel().selectedItemProperty().addListener((obs, old, file) -> {
             if(file != null && selectedCommit != null) onFileSelected(file);
         });
+
+        List<String> recent = recentRepos.load();
+        if(!recent.isEmpty()){
+            recentMenu.getItems().clear();
+            for(String path : recent){
+                MenuItem item = new MenuItem(path);
+                item.setOnAction(e -> loadRepository(new File(path)));
+                recentMenu.getItems().add(item);
+            }
+        }
     }
 
     @FXML
@@ -64,6 +78,9 @@ public class MainController implements Initializable {
             branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
             commitTable.setItems(FXCollections.observableArrayList(gitService.getCommits(200)));
             statusLabel.setText("Loaded: " + dir.getName());
+            try{
+                recentRepos.add(dir.getAbsolutePath());
+            }catch (Exception ignored){}
         }catch (Exception e){
             statusLabel.setText("Error " + e.getMessage());
         }

@@ -13,6 +13,11 @@
             <Separator orientation="VERTICAL"/>
             <Button fx:id="openRepoBtn" text="Open Repo" onAction="#handleOpenRepo"/>
             <Button text="Refresh" onAction="#handleRefresh"/>
+            <MenuButton fx:id="recentMenu" text="Recent">
+                <items>
+                    <MenuItem fx:id="noRecentItem" text="No recent repositories"/>
+                </items>
+            </MenuButton>
         </ToolBar>
     </top>
 
