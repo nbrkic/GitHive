@@ -84,3 +84,14 @@
 .table-row-cell:selected .text {
     -fx-fill: #cdd9e5;
 }
+
+.diff-area {
+    -fx-background-color: #0a1220;
+    -fx-text-fill: #cdd9e5;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 12px;
+}
+
+.diff-area .content {
+    -fx-background-color: #0a1220;
+}
