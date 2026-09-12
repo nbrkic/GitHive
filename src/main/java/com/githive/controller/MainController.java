@@ -1,10 +1,13 @@
 package com.githive.controller;
 
 import com.githive.model.CommitInfo;
+import com.githive.model.GraphRow;
 import com.githive.service.GitService;
+import com.githive.service.GraphLayoutService;
 import com.githive.service.RecentReposService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -23,15 +26,16 @@ public class MainController implements Initializable {
     @FXML private TableColumn<CommitInfo, String> messageCol;
     @FXML private TableColumn<CommitInfo, String> authorCol;
     @FXML private TableColumn<CommitInfo, String> dateCol;
-    @FXML private TextArea commitDetails;
-    @FXML private Label statusLabel;
+@FXML private Label statusLabel;
     @FXML private ListView<String> fileList;
     @FXML private TextArea  diffView;
     @FXML private MenuButton recentMenu;
+    @FXML private TableColumn<CommitInfo, GraphRow> graphCol;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
     private final RecentReposService recentRepos = new RecentReposService();
+    private final GraphLayoutService graphLayout = new GraphLayoutService();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -57,6 +61,7 @@ public class MainController implements Initializable {
                 recentMenu.getItems().add(item);
             }
         }
+        graphCol.setCellFactory(col -> new GraphCell());
     }
 
     @FXML
@@ -76,7 +81,14 @@ public class MainController implements Initializable {
         try{
             gitService.open(dir);
             branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
-            commitTable.setItems(FXCollections.observableArrayList(gitService.getCommits(200)));
+            List<CommitInfo> commits = gitService.getCommits(200);
+            List<GraphRow> graphRows = graphLayout.compute(commits);
+            ObservableList<CommitInfo> items = FXCollections.observableArrayList(commits);
+            commitTable.setItems(items);
+            graphCol.setCellValueFactory(d -> {
+                int index = items.indexOf(d.getValue());
+                return new javafx.beans.property.SimpleObjectProperty<>(index >= 0 ? graphRows.get(index) : null);
+            });
             statusLabel.setText("Loaded: " + dir.getName());
             try{
                 recentRepos.add(dir.getAbsolutePath());

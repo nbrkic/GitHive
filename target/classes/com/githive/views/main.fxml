@@ -33,6 +33,7 @@
 
                 <TableView fx:id="commitTable">
                     <columns>
+                        <TableColumn fx:id="graphCol" text="Graph" prefWidth="120"/>
                         <TableColumn fx:id="hashCol"    text="Hash"    prefWidth="80"/>
                         <TableColumn fx:id="messageCol" text="Message" prefWidth="420"/>
                         <TableColumn fx:id="authorCol"  text="Author"  prefWidth="150"/>

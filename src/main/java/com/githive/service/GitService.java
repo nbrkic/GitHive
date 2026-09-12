@@ -57,7 +57,9 @@ public class GitService {
     public List<CommitInfo> getCommits(int limit) throws GitAPIException {
         List<CommitInfo> result = new ArrayList<>();
         for (RevCommit c : git.log().setMaxCount(limit).call()) {
-            result.add(new CommitInfo(c.abbreviate(7).name(), c.getName(), c.getShortMessage(), c.getAuthorIdent().getName(), DATE_FMT.format(new Date((long) c.getCommitTime() * 1000))));
+            List<String> parents = new ArrayList<>();
+            for (RevCommit p : c.getParents()) parents.add(p.getName());
+            result.add(new CommitInfo(c.abbreviate(7).name(), c.getName(), c.getShortMessage(), c.getAuthorIdent().getName(), DATE_FMT.format(new Date((long) c.getCommitTime() * 1000)), parents));
         }
         return result;
     }
