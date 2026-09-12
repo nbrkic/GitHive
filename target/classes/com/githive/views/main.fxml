@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.githive.controller.MainController"
+            style="-fx-background-color: #0d1b2a;">
+
+    <top>
+        <ToolBar styleClass="top-toolbar">
+            <Label text="GitHive" styleClass="app-title"/>
+            <Separator orientation="VERTICAL" style="-fx-padding: 0 8 0 8;"/>
+            <Button fx:id="openRepoBtn" text="Open Repo" onAction="#handleOpenRepo"
+                    styleClass="accent"/>
+            <Button text="Refresh" onAction="#handleRefresh"/>
+        </ToolBar>
+    </top>
+
+    <center>
+        <SplitPane dividerPositions="0.22" style="-fx-background-color: #0d1b2a;">
+
+            <VBox styleClass="sidebar" minWidth="160">
+                <Label text="BRANCHES" styleClass="sidebar-header"/>
+                <ListView fx:id="branchList" VBox.vgrow="ALWAYS"
+                          style="-fx-background-color: transparent;"/>
+            </VBox>
+
+            <SplitPane orientation="VERTICAL" dividerPositions="0.6"
+                       style="-fx-background-color: #0d1b2a;">
+
+                <TableView fx:id="commitTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="hashCol"    text="Hash"    prefWidth="80"/>
+                        <TableColumn fx:id="messageCol" text="Message" prefWidth="420"/>
+                        <TableColumn fx:id="authorCol"  text="Author"  prefWidth="150"/>
+                        <TableColumn fx:id="dateCol"    text="Date"    prefWidth="150"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="Open a Git repository to view commits"
+                               style="-fx-text-fill: #4d6b8a; -fx-font-size: 14;"/>
+                    </placeholder>
+                </TableView>
+
+                <VBox styleClass="detail-panel">
+                    <Label text="COMMIT DETAILS" styleClass="sidebar-header"/>
+                    <TextArea fx:id="commitDetails" editable="false" wrapText="true"
+                              VBox.vgrow="ALWAYS"
+                              promptText="Select a commit to view details"
+                              style="-fx-background-color: #111e2e; -fx-text-fill: #cdd9e5;
+                                     -fx-font-family: monospace; -fx-font-size: 13;"/>
+                </VBox>
+
+            </SplitPane>
+        </SplitPane>
+    </center>
+
+    <bottom>
+        <HBox styleClass="status-bar">
+            <Label fx:id="statusLabel" text="Ready — open a repository to get started"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>
