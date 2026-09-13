@@ -226,4 +226,12 @@ public class GitService {
         config.setString("user", null, "email", email);
         config.save();
     }
+
+    public void unstageFile(String path) throws GitAPIException{
+        git.reset().addPath(path).call();
+    }
+
+    public void discardChanges(String path) throws Exception{
+        git.checkout().addPath(path).call();
+    }
 }

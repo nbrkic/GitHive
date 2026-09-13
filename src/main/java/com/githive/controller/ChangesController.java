@@ -34,6 +34,7 @@ public class ChangesController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         unstagedList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        stagedList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         commitMsg.setOnAction(e -> handleCommit());
     }
 
@@ -95,5 +96,42 @@ public class ChangesController implements Initializable {
         } catch (Exception e) {
             commitMsg.setText("Error: " + e.getMessage());
         }
+    }
+
+    @FXML
+    private void handleUnstage(){
+        List<String> selected = new ArrayList<>(stagedList.getSelectionModel().getSelectedItems());
+        if(selected.isEmpty()) return;
+        try{
+            for(String item : selected) gitService.unstageFile(item.substring(3));
+            refresh();
+        }catch (Exception e){
+            stagedList.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+        }
+    }
+
+    @FXML
+    private void handleDiscard(){
+        List<String> selected = new ArrayList<>(unstagedList.getSelectionModel().getSelectedItems());
+        if (selected.isEmpty()) return;
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Discard Changes");
+        confirm.setHeaderText("Ovo će trajno odbaciti izmjene u odabranim fajlovima.");
+        confirm.setContentText("Jesi li siguran?");
+        confirm.showAndWait().ifPresent(btn -> {
+            if (btn == ButtonType.OK) {
+                for (String item : selected) {
+                    if (item.startsWith("?")) continue; // untracked se ne može discardovati
+                    try {
+                        gitService.discardChanges(item.substring(3));
+                    } catch (Exception e) {
+                        unstagedList.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+                        return;
+                    }
+                }
+                refresh();
+            }
+        });
     }
 }
