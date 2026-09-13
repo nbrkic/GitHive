@@ -1,9 +1,7 @@
 package com.githive.service;
 
 import com.githive.model.CommitInfo;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.MergeResult;
-import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -17,7 +15,6 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
-import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.dircache.DirCache;
 
 import java.io.ByteArrayOutputStream;
@@ -346,5 +343,26 @@ public class GitService {
                     DATE_FMT.format(new Date((long) c.getCommitTime() * 1000)), parents));
         }
         return result;
+    }
+
+    public List<String> getConflictingFiles() throws GitAPIException {
+        return new ArrayList<>(git.status().call().getConflicting());
+    }
+
+    public String getConflictingFileContent(String path) throws IOException {
+        File file = new File(git.getRepository().getWorkTree(), path);
+        return Files.readString(file.toPath());
+    }
+
+    public void acceptOurs(String path) throws GitAPIException {
+        git.checkout().setStage(CheckoutCommand.Stage.OURS).addPath(path).call();
+    }
+
+    public void acceptTheirs(String path) throws GitAPIException {
+        git.checkout().setStage(CheckoutCommand.Stage.THEIRS).addPath(path).call();
+    }
+
+    public void abortMerge() throws GitAPIException {
+        git.rebase().setOperation(org.eclipse.jgit.api.RebaseCommand.Operation.ABORT).call();
     }
 }

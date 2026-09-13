@@ -16,6 +16,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -56,6 +57,7 @@ public class MainController implements Initializable {
     @FXML private MenuItem closeRepoItem;
     @FXML private Label branchLabel;
     @FXML private MenuItem manageRemotesItem;
+    @FXML private Button conflictsBtn;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
@@ -290,6 +292,8 @@ public class MainController implements Initializable {
                     || c.author().toLowerCase().contains(lower)
                     || c.shortHash().toLowerCase().contains(lower));
         });
+        conflictsBtn.setVisible(false);
+        conflictsBtn.setManaged(false);
     }
 
     @FXML
@@ -321,6 +325,14 @@ public class MainController implements Initializable {
             statusLabel.setText("Loaded: " + dir.getName());
             setRepoLoaded(true);
             updateBranchLabel();
+            try {
+                List<String> conflicts = gitService.getConflictingFiles();
+                boolean hasConflicts = !conflicts.isEmpty();
+                conflictsBtn.setVisible(hasConflicts);
+                conflictsBtn.setManaged(hasConflicts);
+            } catch (Exception e) {
+                statusLabel.setText("Conflicts check error: " + e.getMessage());
+            }
             try {
                 tagList.setItems(FXCollections.observableArrayList(gitService.getTags()));
             } catch (Exception ignored) {}
@@ -662,7 +674,10 @@ public class MainController implements Initializable {
         diffView.clear();
         searchField.clear();
         filteredCommits = null;
+        conflictsBtn.setVisible(false);
+        conflictsBtn.setManaged(false);
         setRepoLoaded(false);
+        updateBranchLabel();
         statusLabel.setText("Ready");
     }
 
@@ -734,6 +749,125 @@ public class MainController implements Initializable {
             grid.add(addBtn, 0, 4, 2, 1);
 
             dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+            dialog.showAndWait();
+        } catch (Exception e) {
+            statusLabel.setText("Error: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void handleConflicts() {
+        if (!gitService.isLoaded()) return;
+        try {
+            List<String> conflicts = gitService.getConflictingFiles();
+            if (conflicts.isEmpty()) {
+                statusLabel.setText("Nema konflikata.");
+                return;
+            }
+
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("Resolve Conflicts");
+            dialog.setHeaderText("Konfliktni fajlovi:");
+
+            ListView<String> conflictList = new ListView<>(FXCollections.observableArrayList(conflicts));
+            conflictList.setPrefHeight(120);
+
+            TextArea contentArea = new TextArea();
+            contentArea.setEditable(false);
+            contentArea.setPrefHeight(300);
+            contentArea.setStyle("-fx-font-family: monospace; -fx-font-size: 12;");
+
+            conflictList.getSelectionModel().selectedItemProperty().addListener((obs, old, path) -> {
+                if (path == null) return;
+                try {
+                    contentArea.setText(gitService.getConflictingFileContent(path));
+                } catch (Exception e) {
+                    contentArea.setText("Error: " + e.getMessage());
+                }
+            });
+
+            Button oursBtn = new Button("Accept Ours");
+            Button theirsBtn = new Button("Accept Theirs");
+            Button resolvedBtn = new Button("Mark Resolved");
+            Button abortBtn = new Button("Abort Merge");
+            abortBtn.setStyle("-fx-text-fill: #e05252;");
+
+            oursBtn.setOnAction(e -> {
+                String path = conflictList.getSelectionModel().getSelectedItem();
+                if (path == null) return;
+                try {
+                    gitService.acceptOurs(path);
+                    gitService.stageFile(path);
+                    conflicts.remove(path);
+                    conflictList.setItems(FXCollections.observableArrayList(conflicts));
+                    contentArea.clear();
+                    if (conflicts.isEmpty()) { conflictsBtn.setVisible(false); conflictsBtn.setManaged(false); }
+                    statusLabel.setText("Accepted ours: " + path);
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
+            });
+
+            theirsBtn.setOnAction(e -> {
+                String path = conflictList.getSelectionModel().getSelectedItem();
+                if (path == null) return;
+                try {
+                    gitService.acceptTheirs(path);
+                    gitService.stageFile(path);
+                    conflicts.remove(path);
+                    conflictList.setItems(FXCollections.observableArrayList(conflicts));
+                    contentArea.clear();
+                    if (conflicts.isEmpty()) { conflictsBtn.setVisible(false); conflictsBtn.setManaged(false); }
+                    statusLabel.setText("Accepted theirs: " + path);
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
+            });
+
+            resolvedBtn.setOnAction(e -> {
+                String path = conflictList.getSelectionModel().getSelectedItem();
+                if (path == null) return;
+                try {
+                    gitService.stageFile(path);
+                    conflicts.remove(path);
+                    conflictList.setItems(FXCollections.observableArrayList(conflicts));
+                    contentArea.clear();
+                    if (conflicts.isEmpty()) {
+                        conflictsBtn.setVisible(false);
+                        conflictsBtn.setManaged(false);
+                    }
+                    statusLabel.setText("Resolved: " + path);
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
+            });
+
+            abortBtn.setOnAction(e -> {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Abort Merge");
+                confirm.setHeaderText("Odustati od mergea? Sve izmjene će biti vraćene.");
+                confirm.showAndWait().ifPresent(btn -> {
+                    if (btn == ButtonType.OK) {
+                        try {
+                            gitService.abortMerge();
+                            conflictsBtn.setVisible(false);
+                            conflictsBtn.setManaged(false);
+                            handleRefresh();
+                            dialog.close();
+                            statusLabel.setText("Merge aborted.");
+                        } catch (Exception ex) {
+                            statusLabel.setText("Error: " + ex.getMessage());
+                        }
+                    }
+                });
+            });
+
+            HBox buttons = new HBox(8, oursBtn, theirsBtn, resolvedBtn, abortBtn);
+            VBox content = new VBox(8, conflictList, buttons, contentArea);
+            content.setPrefWidth(700);
+
+            dialog.getDialogPane().setContent(content);
             dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
             dialog.showAndWait();
         } catch (Exception e) {

@@ -29,6 +29,8 @@
                 </items>
             </MenuButton>
             <Button fx:id="changesBtn" text="Changes" onAction="#handleShowChanges"/>
+            <Button fx:id="conflictsBtn" text="Conflicts" onAction="#handleConflicts"
+                    style="-fx-text-fill: #e05252;"/>
             <Separator orientation="VERTICAL"/>
             <Button fx:id="fetchBtn" text="Fetch" onAction="#handleFetch"/>
             <Button fx:id="pullBtn" text="Pull" onAction="#handlePull"/>
