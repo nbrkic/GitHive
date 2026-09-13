@@ -12,6 +12,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
@@ -31,6 +32,7 @@ public class GitService {
     private Git git;
     private File repoDir;
     private static final SimpleDateFormat DATE_FMT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    private UsernamePasswordCredentialsProvider credentials;
 
     public void open(File dir) throws IOException {
         if (git != null) {
@@ -120,6 +122,18 @@ public class GitService {
 
     public void commit(String message) throws GitAPIException{
         git.commit().setMessage(message).call();
+    }
+
+    public void setCredentials(String username, String token){
+        this.credentials = new UsernamePasswordCredentialsProvider(username, token);
+    }
+
+    public void push() throws GitAPIException{
+        git.push().setCredentialsProvider(credentials).call();
+    }
+
+    public void pull() throws GitAPIException{
+        git.pull().setCredentialsProvider(credentials).call();
     }
 
     private AbstractTreeIterator treeParser(Repository repo, RevCommit commit) throws Exception {

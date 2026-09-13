@@ -19,6 +19,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -133,6 +134,48 @@ public class MainController implements Initializable {
             diffView.setText(diff);
             diffView.setScrollTop(0);
         }catch (Exception e){
+            statusLabel.setText("Error: " + e.getMessage());
+        }
+   }
+
+   @FXML
+    private void handlePull(){
+        if(!gitService.isLoaded()) return;
+        askCredentialsAndRun(false);
+   }
+
+   @FXML
+    private void handlePush(){
+        if(!gitService.isLoaded()) return;
+        askCredentialsAndRun(true);
+   }
+
+   private void askCredentialsAndRun(boolean isPush){
+        TextInputDialog userDialog = new TextInputDialog();
+        userDialog.setTitle(isPush ? "Push" : "Pull");
+        userDialog.setHeaderText("GitHub username:");
+        userDialog.setContentText("Username:");
+        Optional<String> username = userDialog.showAndWait();
+        if(username.isEmpty()) return;
+
+        TextInputDialog tokenDialog = new TextInputDialog();
+        tokenDialog.setTitle(isPush ? "Push" : "Pull");
+        tokenDialog.setHeaderText("Personal Access Token (PAT):");
+        tokenDialog.setContentText("Token:");
+        Optional<String> token = tokenDialog.showAndWait();
+        if(token.isEmpty()) return;
+
+        gitService.setCredentials(username.get(), token.get());
+        try{
+            if(isPush){
+                gitService.push();
+                statusLabel.setText("Push succesful.");
+            }
+            else{
+                gitService.pull();
+                statusLabel.setText("Pull successful");
+            }
+        }catch(Exception e){
             statusLabel.setText("Error: " + e.getMessage());
         }
    }

@@ -19,6 +19,9 @@
                 </items>
             </MenuButton>
             <Button text="Changes" onAction="#handleShowChanges"/>
+            <Separator orientation="VERTICAL"/>
+            <Button text="Pull" onAction="#handlePull"/>
+            <Button text="Push" onAction="#handlePush"/>
         </ToolBar>
     </top>
 
