@@ -30,6 +30,7 @@
 
             <VBox style="-fx-background-color: #0a1628; -fx-padding: 10;">
                 <Label text="BRANCHES" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
+                <Button text="+ New Branch" onAction="#handleNewBranch" maxWidth="Infinity" style="-fx-font-size: 11;"/>
                 <ListView fx:id="branchList" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;"/>
             </VBox>
 

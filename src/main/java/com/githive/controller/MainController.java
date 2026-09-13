@@ -66,6 +66,37 @@ public class MainController implements Initializable {
             }
         }
         graphCol.setCellFactory(col -> new GraphCell());
+
+        ContextMenu branchMenu = new ContextMenu();
+        MenuItem checkoutItem = new MenuItem("Checkout");
+        MenuItem deleteItem = new MenuItem("Delete");
+
+        checkoutItem.setOnAction(e -> {
+            String branch = branchList.getSelectionModel().getSelectedItem();
+            if(branch == null) return;
+            try{
+                gitService.checkoutBranch(branch);
+                statusLabel.setText("Switched to: " + branch);
+                handleRefresh();
+            }catch (Exception ex){
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
+        });
+
+        deleteItem.setOnAction(e -> {
+            String branch = branchList.getSelectionModel().getSelectedItem();
+            if (branch == null) return;
+            try {
+                gitService.deleteBranch(branch);
+                branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
+                statusLabel.setText("Deleted branch: " + branch);
+            } catch (Exception ex) {
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
+        });
+
+        branchMenu.getItems().addAll(checkoutItem, deleteItem);
+        branchList.setContextMenu(branchMenu);
     }
 
     @FXML
@@ -178,5 +209,23 @@ public class MainController implements Initializable {
         }catch(Exception e){
             statusLabel.setText("Error: " + e.getMessage());
         }
+   }
+
+   @FXML
+    private void handleNewBranch(){
+        if(!gitService.isLoaded()) return;
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New Branch");
+        dialog.setHeaderText("Enter branch name:");
+        dialog.setContentText("Name:");
+        dialog.showAndWait().ifPresent(name -> {
+            try{
+                gitService.createBranch(name);
+                branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
+                statusLabel.setText("Branch created: " + name);
+            }catch (Exception e){
+                statusLabel.setText("Error: " + e.getMessage());
+            }
+        });
    }
 }

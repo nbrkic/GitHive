@@ -136,6 +136,18 @@ public class GitService {
         git.pull().setCredentialsProvider(credentials).call();
     }
 
+    public void checkoutBranch(String name) throws GitAPIException{
+        git.checkout().setName(name).call();
+    }
+
+    public void createBranch(String name) throws GitAPIException {
+        git.branchCreate().setName(name).call();
+    }
+
+    public void deleteBranch(String name) throws GitAPIException {
+        git.branchDelete().setBranchNames(name).setForce(true).call();
+    }
+
     private AbstractTreeIterator treeParser(Repository repo, RevCommit commit) throws Exception {
         try (RevWalk walk = new RevWalk(repo);
              ObjectReader reader = repo.newObjectReader()) {
