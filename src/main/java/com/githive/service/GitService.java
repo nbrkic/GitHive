@@ -282,4 +282,14 @@ public class GitService {
     public void reset(String hash, ResetCommand.ResetType type) throws GitAPIException{
         git.reset().setMode(type).setRef(hash).call();
     }
+
+    public void revert(String hash) throws GitAPIException {
+        Repository repo = git.getRepository();
+        try (RevWalk walk = new RevWalk(repo)) {
+            RevCommit commit = walk.parseCommit(ObjectId.fromString(hash));
+            git.revert().include(commit).call();
+        } catch (Exception e) {
+            throw new GitAPIException("Revert failed: " + e.getMessage()) {};
+        }
+    }
 }

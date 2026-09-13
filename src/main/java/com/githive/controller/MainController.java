@@ -184,7 +184,27 @@ public class MainController implements Initializable {
             });
         });
 
-        commitMenu.getItems().addAll(softReset, mixedReset, hardReset);
+        MenuItem revertItem = new MenuItem("Revert Commit");
+        revertItem.setOnAction(e -> {
+            CommitInfo commit = commitTable.getSelectionModel().getSelectedItem();
+            if (commit == null) return;
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Revert Commit");
+            confirm.setHeaderText("Napraviće se novi commit koji poništava: " + commit.shortHash());
+            confirm.setContentText("Nastavi?");
+            confirm.showAndWait().ifPresent(btn -> {
+                if (btn == ButtonType.OK) {
+                    try {
+                        gitService.revert(commit.fullHash());
+                        handleRefresh();
+                        statusLabel.setText("Reverted: " + commit.shortHash());
+                    } catch (Exception ex) {
+                        statusLabel.setText("Error: " + ex.getMessage());
+                    }
+                }
+            });
+        });
+        commitMenu.getItems().addAll(softReset, mixedReset, hardReset, revertItem);
         commitTable.setContextMenu(commitMenu);
 
         setRepoLoaded(false);
