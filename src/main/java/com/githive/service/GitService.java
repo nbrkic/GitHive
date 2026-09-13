@@ -4,13 +4,10 @@ import com.githive.model.CommitInfo;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectReader;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -61,13 +58,18 @@ public class GitService {
 
     public List<CommitInfo> getCommits(int limit) throws GitAPIException {
         List<CommitInfo> result = new ArrayList<>();
-        for (RevCommit c : git.log().setMaxCount(limit).call()) {
-            List<String> parents = new ArrayList<>();
-            for (RevCommit p : c.getParents()) parents.add(p.getName());
-            result.add(new CommitInfo(c.abbreviate(7).name(), c.getName(), c.getShortMessage(), c.getAuthorIdent().getName(), DATE_FMT.format(new Date((long) c.getCommitTime() * 1000)), parents));
+        try {
+            for (RevCommit c : git.log().setMaxCount(limit).call()) {
+                List<String> parents = new ArrayList<>();
+                for (RevCommit p : c.getParents()) parents.add(p.getName());
+                result.add(new CommitInfo(c.abbreviate(7).name(), c.getName(), c.getShortMessage(), c.getAuthorIdent().getName(), DATE_FMT.format(new Date((long) c.getCommitTime() * 1000)), parents));
+            }
+        } catch (org.eclipse.jgit.api.errors.NoHeadException ignored) {
+            // empty repo, no commits yet
         }
         return result;
     }
+
 
     public List<String> getChangedFiles(String fullHash) throws Exception {
         Repository repo = git.getRepository();
@@ -196,5 +198,32 @@ public class GitService {
 
     public void deleteTag(String name) throws GitAPIException{
         git.tagDelete().setTags(name).call();
+    }
+
+    public void initRepo(File directory) throws GitAPIException, IOException{
+        if(git != null) git.close();
+        git = Git.init().setDirectory(directory).call();
+        this.repoDir = directory;
+    }
+
+    public void cloneRepo(String url, File directory) throws GitAPIException{
+        if(git != null) git.close();
+        git = Git.cloneRepository().setURI(url).setDirectory(directory).call();
+        this.repoDir = directory;
+    }
+
+    public String getConfigName(){
+        return git.getRepository().getConfig().getString("user", null, "name");
+    }
+
+    public String getConfigEmail(){
+        return git.getRepository().getConfig().getString("user", null, "email");
+    }
+
+    public void setConfig(String name, String email) throws IOException{
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("user", null, "name", name);
+        config.setString("user", null, "email", email);
+        config.save();
     }
 }

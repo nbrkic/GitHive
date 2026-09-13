@@ -1,5 +1,6 @@
 com\githive\model\GraphRow.class
 com\githive\controller\GraphCell.class
+com\githive\controller\MainController$1.class
 com\githive\controller\ChangesController.class
 com\githive\service\GraphLayoutService.class
 com\githive\service\RecentReposService.class

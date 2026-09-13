@@ -8,6 +8,7 @@ import com.githive.service.RecentReposService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -17,6 +18,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
@@ -319,4 +321,87 @@ public class MainController implements Initializable {
             }
         });
    }
+
+   @FXML
+    private void handleInitRepo(){
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Select folder for new repository");
+        File dir  = chooser.showDialog(openRepoBtn.getScene().getWindow());
+        if(dir == null) return;
+        try{
+            gitService.initRepo(dir);
+            loadRepository(dir);
+            statusLabel.setText("Initialized new repo: " + dir.getName());
+        }catch (Exception e){
+            statusLabel.setText("Error: " + e.getMessage());
+        }
+   }
+
+   @FXML
+    private void handleCloneRepo(){
+        TextInputDialog urlDialog = new TextInputDialog();
+        urlDialog.setTitle("Clone repository");
+        urlDialog.setHeaderText("Enter repository URL:");
+        urlDialog.setContentText("URL:");
+        Optional<String> url = urlDialog.showAndWait();
+        if(url.isEmpty()) return;
+
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Select destination folder");
+        File dir = chooser.showDialog(openRepoBtn.getScene().getWindow());
+        if(dir == null) return;
+
+        statusLabel.setText("Cloning");
+
+       Task<Void> task = new Task<Void>() {
+           @Override
+           protected Void call() throws Exception {
+               gitService.cloneRepo(url.get(), dir);
+               return null;
+           }
+       };
+       task.setOnSucceeded(e -> {
+           loadRepository(dir);
+           statusLabel.setText("Cloned: " + dir.getName());
+       });
+       task.setOnFailed(e -> {
+           statusLabel.setText("Error: " + task.getException().getMessage());
+       });
+       new Thread(task).start();
+   }
+
+    @FXML
+    private void handleConfig() {
+        if (!gitService.isLoaded()) {
+            statusLabel.setText("No repository loaded.");
+            return;
+        }
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Git Config");
+        dialog.setHeaderText("Local repository config:");
+
+        javafx.scene.control.TextField nameField = new javafx.scene.control.TextField(gitService.getConfigName());
+        javafx.scene.control.TextField emailField = new javafx.scene.control.TextField(gitService.getConfigEmail());
+
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(new Label("Name:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label("Email:"), 0, 1);
+        grid.add(emailField, 1, 1);
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.showAndWait().ifPresent(btn -> {
+            if (btn == ButtonType.OK) {
+                try {
+                    gitService.setConfig(nameField.getText(), emailField.getText());
+                    statusLabel.setText("Config saved.");
+                } catch (IOException e) {
+                    statusLabel.setText("Error: " + e.getMessage());
+                }
+            }
+        });
+    }
 }

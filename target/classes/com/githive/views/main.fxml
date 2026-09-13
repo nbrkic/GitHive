@@ -10,6 +10,14 @@
     <top>
         <ToolBar>
             <Label text="GitHive" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #58a6ff;"/>
+            <MenuButton text="Repository">
+                <items>
+                    <MenuItem text="Init New Repository" onAction="#handleInitRepo"/>
+                    <MenuItem text="Clone Repository" onAction="#handleCloneRepo"/>
+                </items>
+            </MenuButton>
+            <Button text="Config" onAction="#handleConfig"/>
+            <Separator orientation="VERTICAL"/>
             <Separator orientation="VERTICAL"/>
             <Button fx:id="openRepoBtn" text="Open Repo" onAction="#handleOpenRepo"/>
             <Button text="Refresh" onAction="#handleRefresh"/>
