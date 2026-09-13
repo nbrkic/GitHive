@@ -2,6 +2,7 @@ package com.githive.service;
 
 import com.githive.model.CommitInfo;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -148,6 +149,24 @@ public class GitService {
         git.branchDelete().setBranchNames(name).setForce(true).call();
     }
 
+    public void stashSave() throws GitAPIException{
+        git.stashCreate().call();
+    }
+
+    public void stashPop() throws  GitAPIException{
+        git.stashApply().call();
+        git.stashDrop().call();
+    }
+
+    public List<String> stashList() throws GitAPIException{
+        List<String> result = new ArrayList<>();
+        int i = 0;
+        for(RevCommit c : git.stashList().call()){
+            result.add("stash@{" + i++ + "} " + c.getShortMessage());
+        }
+        return result;
+    }
+
     private AbstractTreeIterator treeParser(Repository repo, RevCommit commit) throws Exception {
         try (RevWalk walk = new RevWalk(repo);
              ObjectReader reader = repo.newObjectReader()) {
@@ -156,5 +175,26 @@ public class GitService {
             parse.reset(reader, tree.getId());
             return parse;
         }
+    }
+
+    public MergeResult merge(String branchName) throws Exception{
+        ObjectId branchId = git.getRepository().resolve(branchName);
+        return git.merge().include(branchId).call();
+    }
+
+    public List<String> getTags() throws GitAPIException{
+        List<String> names = new ArrayList<>();
+        for(Ref ref : git.tagList().call()){
+            names.add(ref.getName().replace("refs/tags/", ""));
+        }
+        return names;
+    }
+
+    public void createTag(String name) throws GitAPIException{
+        git.tag().setName(name).call();
+    }
+
+    public void deleteTag(String name) throws GitAPIException{
+        git.tagDelete().setTags(name).call();
     }
 }

@@ -30,11 +30,12 @@ public class MainController implements Initializable {
     @FXML private TableColumn<CommitInfo, String> messageCol;
     @FXML private TableColumn<CommitInfo, String> authorCol;
     @FXML private TableColumn<CommitInfo, String> dateCol;
-@FXML private Label statusLabel;
+    @FXML private Label statusLabel;
     @FXML private ListView<String> fileList;
     @FXML private TextArea  diffView;
     @FXML private MenuButton recentMenu;
     @FXML private TableColumn<CommitInfo, GraphRow> graphCol;
+    @FXML private ListView<String> tagList;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
@@ -95,8 +96,38 @@ public class MainController implements Initializable {
             }
         });
 
-        branchMenu.getItems().addAll(checkoutItem, deleteItem);
+        MenuItem mergeItem = new MenuItem("Merge into current");
+        mergeItem.setOnAction(e -> {
+            String branch = branchList.getSelectionModel().getSelectedItem();
+            if (branch == null) return;
+            try {
+                gitService.merge(branch);
+                handleRefresh();
+                statusLabel.setText("Merged: " + branch);
+            } catch (Exception ex) {
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
+        });
+
+        branchMenu.getItems().addAll(checkoutItem, deleteItem, mergeItem);
+
         branchList.setContextMenu(branchMenu);
+
+        ContextMenu tagMenu = new ContextMenu();
+        MenuItem deleteTagItem = new MenuItem("Delete Tag");
+        deleteTagItem.setOnAction(e -> {
+            String tag = tagList.getSelectionModel().getSelectedItem();
+            if(tag == null) return;
+            try{
+                gitService.deleteTag(tag);
+                tagList.setItems(FXCollections.observableArrayList(gitService.getTags()));
+                statusLabel.setText("Deleted tag: " + tag);
+            }catch (Exception ex){
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
+        });
+        tagMenu.getItems().add(deleteTagItem);
+        tagList.setContextMenu(tagMenu);
     }
 
     @FXML
@@ -125,6 +156,10 @@ public class MainController implements Initializable {
                 return new javafx.beans.property.SimpleObjectProperty<>(index >= 0 ? graphRows.get(index) : null);
             });
             statusLabel.setText("Loaded: " + dir.getName());
+            try {
+                tagList.setItems(FXCollections.observableArrayList(gitService.getTags()));
+            } catch (Exception ignored) {}
+
             try{
                 recentRepos.add(dir.getAbsolutePath());
             }catch (Exception ignored){}
@@ -223,6 +258,62 @@ public class MainController implements Initializable {
                 gitService.createBranch(name);
                 branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
                 statusLabel.setText("Branch created: " + name);
+            }catch (Exception e){
+                statusLabel.setText("Error: " + e.getMessage());
+            }
+        });
+   }
+
+   @FXML
+    private void handleStashSave(){
+        if(!gitService.isLoaded()) return;
+        try{
+            gitService.stashSave();
+            statusLabel.setText("Changes stashed.");
+        }catch (Exception e){
+            statusLabel.setText("Error: " + e.getMessage());
+        }
+   }
+
+   @FXML
+   private void handleStashPop() {
+       if (!gitService.isLoaded()) return;
+       try {
+           gitService.stashPop();
+           statusLabel.setText("Stash applied.");
+       } catch (Exception e) {
+           statusLabel.setText("Error: " + e.getMessage());
+       }
+   }
+
+   @FXML
+    private void handleStashList(){
+        if(!gitService.isLoaded()) return;
+        try{
+            List<String> stashes= gitService.stashList();
+            String msg = stashes.isEmpty() ? "No stashes." : String.join("\n", stashes);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Stash List");
+            alert.setHeaderText(null);
+            alert.setContentText(msg);
+            alert.showAndWait();
+        }catch (Exception e){
+            statusLabel.setText("Error: " + e.getMessage());
+        }
+   }
+
+   @FXML
+    private void handleNewTag(){
+        if(!gitService.isLoaded()) return;
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New Tag");
+        dialog.setHeaderText("Tag current commit:");
+        dialog.setContentText("Tag name");
+        dialog.showAndWait().ifPresent(name -> {
+            try{
+                gitService.createTag(name);
+                tagList.setItems(FXCollections.observableArrayList(gitService.getTags()));
+                statusLabel.setText("Tag created: " + name);
             }catch (Exception e){
                 statusLabel.setText("Error: " + e.getMessage());
             }
