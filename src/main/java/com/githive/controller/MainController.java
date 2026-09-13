@@ -491,6 +491,7 @@ public class MainController implements Initializable {
             });
             Stage stage = new Stage();
             stage.setTitle("Changes");
+            stage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/com/githive/images/hive.png")));
             stage.setScene(scene);
             stage.show();
         }catch (Exception e){

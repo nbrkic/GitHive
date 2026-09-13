@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -19,6 +20,7 @@ import java.net.ServerSocket;
 public class MainApp extends Application {
     private static final int LOCK_PORT = 54321;
     private static ServerSocket lockSocket;
+    private static final String ICON = "/com/githive/images/hive.png";
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -41,6 +43,7 @@ public class MainApp extends Application {
                 Scene scene = new Scene(loader.load(), 1440, 860);
                 scene.getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
                 stage.setTitle("GitHive");
+                stage.getIcons().add(new Image(getClass().getResourceAsStream(ICON)));
                 stage.setScene(scene);
                 stage.setOnCloseRequest(e -> {
                     releaseLock();
