@@ -31,7 +31,10 @@ public class MainApp extends Application {
         Scene scene = new Scene(loader.load(), 1200, 750);
         stage.setTitle("GitHive");
         stage.setScene(scene);
-        stage.setOnCloseRequest(e -> releaseLock());
+        stage.setOnCloseRequest(e -> {
+            releaseLock();
+            Platform.exit();
+        });
         stage.show();
     }
 

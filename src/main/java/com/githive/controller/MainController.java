@@ -10,6 +10,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -30,6 +31,9 @@ import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class MainController implements Initializable {
     @FXML private Button openRepoBtn;
@@ -66,6 +70,8 @@ public class MainController implements Initializable {
     private final RecentReposService recentRepos = new RecentReposService();
     private final GraphLayoutService graphLayout = new GraphLayoutService();
     private FilteredList<CommitInfo> filteredCommits;
+    private ScheduledExecutorService scheduler;
+    private String lastKnownHead = "";
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -336,6 +342,8 @@ public class MainController implements Initializable {
             statusLabel.setText("Loaded: " + dir.getName());
             setRepoLoaded(true);
             updateBranchLabel();
+            lastKnownHead = gitService.getCurrentHead();
+            startAutoRefresh();
             try {
                 List<String> conflicts = gitService.getConflictingFiles();
                 boolean hasConflicts = !conflicts.isEmpty();
@@ -708,6 +716,8 @@ public class MainController implements Initializable {
 
     @FXML
     private void handleCloseRepo() {
+        stopAutoRefresh();
+        lastKnownHead = "";
         gitService.closeRepo();
         commitTable.setItems(FXCollections.observableArrayList());
         branchList.getItems().clear();
@@ -721,6 +731,31 @@ public class MainController implements Initializable {
         setRepoLoaded(false);
         updateBranchLabel();
         statusLabel.setText("Ready");
+    }
+
+    private void startAutoRefresh() {
+        stopAutoRefresh();
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+        scheduler.scheduleAtFixedRate(() -> {
+            if (!gitService.isLoaded()) return;
+            try {
+                String currentHead = gitService.getCurrentHead();
+                if (!currentHead.equals(lastKnownHead)) {
+                    lastKnownHead = currentHead;
+                    Platform.runLater(this::handleRefresh);
+                }
+            } catch (Exception ignored) {}
+        }, 5, 5, TimeUnit.SECONDS);
+    }
+
+    private void stopAutoRefresh() {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
+        }
     }
 
     @FXML

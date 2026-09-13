@@ -300,6 +300,14 @@ public class GitService {
         }
     }
 
+    public String getCurrentHead() {
+        try {
+            return git.getRepository().resolve("HEAD").getName();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     public String getCurrentBranch(){
         try{
             return git.getRepository().getBranch();
