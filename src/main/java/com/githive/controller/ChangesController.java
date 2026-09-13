@@ -134,4 +134,17 @@ public class ChangesController implements Initializable {
             }
         });
     }
+
+    @FXML
+    private void handleIgnore(){
+        List<String> seleceted = new ArrayList<>(unstagedList.getSelectionModel().getSelectedItems());
+        if(seleceted.isEmpty()) return;
+        List<String> paths = seleceted.stream().map(item -> item.substring(3)).toList();
+        try{
+            gitService.addToGitIgnore(paths);
+            refresh();
+        }catch (Exception e){
+            unstagedList.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+        }
+    }
 }

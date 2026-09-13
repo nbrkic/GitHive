@@ -19,8 +19,11 @@
                 <Button text="Stage Selected" onAction="#handleStage" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                 <Button text="Stage All" onAction="#handleStageAll" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
             </HBox>
-            <Button text="Discard Selected" onAction="#handleDiscard" maxWidth="Infinity"
-                    style="-fx-text-fill: #e05252;"/>
+            <HBox spacing="6">
+                <Button text="Discard Selected" onAction="#handleDiscard" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                        style="-fx-text-fill: #e05252;"/>
+                <Button text="Ignore Selected" onAction="#handleIgnore" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
         </VBox>
 
         <VBox spacing="6">

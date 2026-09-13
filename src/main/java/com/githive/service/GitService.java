@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -237,5 +238,14 @@ public class GitService {
 
     public void fetch() throws GitAPIException{
         git.fetch().setCredentialsProvider(credentials).call();
+    }
+
+    public void addToGitIgnore(List<String> paths) throws IOException{
+        File gitignore = new File(git.getRepository().getWorkTree(), ".gitignore");
+        List<String> existing = gitignore.exists() ? new ArrayList<>(Files.readAllLines(gitignore.toPath())) : new ArrayList<>();
+        for(String path : paths){
+            if(!existing.contains(path)) existing.add(path);
+        }
+        Files.writeString(gitignore.toPath(), String.join("\n", existing) + "\n");
     }
 }
