@@ -32,6 +32,8 @@
                       style="-fx-background-color: #0a1628;"/>
             <Button text="Unstage Selected" onAction="#handleUnstage" maxWidth="Infinity"/>
             <TextField fx:id="commitMsg" promptText="Commit message"/>
+            <CheckBox fx:id="amendCheck" text="Amend last commit" onAction="#handleAmendToggle"
+                      style="-fx-text-fill: #cdd9e5;"/>
             <Button fx:id="commitBtn" text="Commit" onAction="#handleCommit"
                     styleClass="accent" maxWidth="Infinity"/>
         </VBox>

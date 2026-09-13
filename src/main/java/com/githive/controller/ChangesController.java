@@ -18,6 +18,7 @@ public class ChangesController implements Initializable {
     @FXML private ListView<String> unstagedList;
     @FXML private ListView<String> stagedList;
     @FXML private TextField commitMsg;
+    @FXML private CheckBox amendCheck;
 
     private GitService gitService;
     private Consumer<String> onCommitSuccess;
@@ -90,7 +91,11 @@ public class ChangesController implements Initializable {
         }
         if (stagedList.getItems().isEmpty()) return;
         try {
-            gitService.commit(msg);
+            if (amendCheck.isSelected()) {
+                gitService.amendCommit(msg);
+            } else {
+                gitService.commit(msg);
+            }
             if (onCommitSuccess != null) onCommitSuccess.accept(msg);
             ((Stage) commitMsg.getScene().getWindow()).close();
         } catch (Exception e) {
@@ -145,6 +150,16 @@ public class ChangesController implements Initializable {
             refresh();
         }catch (Exception e){
             unstagedList.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
+        }
+    }
+
+    @FXML
+    private void handleAmendToggle(){
+        if(amendCheck.isSelected()){
+            commitMsg.setText(gitService.getLastCommitMessage().trim());
+        }
+        else{
+            commitMsg.clear();
         }
     }
 }

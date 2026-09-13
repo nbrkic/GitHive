@@ -248,4 +248,16 @@ public class GitService {
         }
         Files.writeString(gitignore.toPath(), String.join("\n", existing) + "\n");
     }
+
+    public String getLastCommitMessage(){
+        try{
+            return git.log().setMaxCount(1).call().iterator().next().getFullMessage();
+        }catch (Exception e){
+            return "";
+        }
+    }
+
+    public void amendCommit(String message) throws GitAPIException{
+        git.commit().setAmend(true).setMessage(message).call();
+    }
 }
