@@ -234,9 +234,10 @@ public class MainController implements Initializable {
 
         gitService.setCredentials(username.get(), token.get());
         try{
-            if(isPush){
+            if (isPush) {
                 gitService.push();
-                statusLabel.setText("Push succesful.");
+                handleRefresh();
+                statusLabel.setText("Push successful.");
             }
             else{
                 gitService.pull();
