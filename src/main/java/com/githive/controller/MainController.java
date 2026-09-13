@@ -18,6 +18,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.eclipse.jgit.api.ResetCommand;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,6 +134,59 @@ public class MainController implements Initializable {
         });
         tagMenu.getItems().add(deleteTagItem);
         tagList.setContextMenu(tagMenu);
+
+        ContextMenu commitMenu = new ContextMenu();
+        MenuItem softReset = new MenuItem("Reset → Soft");
+        MenuItem mixedReset = new MenuItem("Reset → Mixed");
+        MenuItem hardReset = new MenuItem("Reset → Hard");
+
+        softReset.setOnAction(e -> {
+            CommitInfo commit = commitTable.getSelectionModel().getSelectedItem();
+            if (commit == null) return;
+            try {
+                gitService.reset(commit.fullHash(), ResetCommand.ResetType.SOFT);
+                handleRefresh();
+                statusLabel.setText("Soft reset to: " + commit.shortHash());
+            } catch (Exception ex) {
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
+        });
+
+        mixedReset.setOnAction(e -> {
+            CommitInfo commit = commitTable.getSelectionModel().getSelectedItem();
+            if (commit == null) return;
+            try {
+                gitService.reset(commit.fullHash(), ResetCommand.ResetType.MIXED);
+                handleRefresh();
+                statusLabel.setText("Mixed reset to: " + commit.shortHash());
+            } catch (Exception ex) {
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
+        });
+
+        hardReset.setOnAction(e -> {
+            CommitInfo commit = commitTable.getSelectionModel().getSelectedItem();
+            if (commit == null) return;
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Hard Reset");
+            confirm.setHeaderText("Hard reset će trajno obrisati sve promjene.");
+            confirm.setContentText("Jesi li siguran?");
+            confirm.showAndWait().ifPresent(btn -> {
+                if (btn == ButtonType.OK) {
+                    try {
+                        gitService.reset(commit.fullHash(), ResetCommand.ResetType.HARD);
+                        handleRefresh();
+                        statusLabel.setText("Hard reset to: " + commit.shortHash());
+                    } catch (Exception ex) {
+                        statusLabel.setText("Error: " + ex.getMessage());
+                    }
+                }
+            });
+        });
+
+        commitMenu.getItems().addAll(softReset, mixedReset, hardReset);
+        commitTable.setContextMenu(commitMenu);
+
         setRepoLoaded(false);
     }
 

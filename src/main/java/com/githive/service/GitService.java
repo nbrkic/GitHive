@@ -3,6 +3,7 @@ package com.githive.service;
 import com.githive.model.CommitInfo;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -278,4 +279,7 @@ public class GitService {
         }
     }
 
+    public void reset(String hash, ResetCommand.ResetType type) throws GitAPIException{
+        git.reset().setMode(type).setRef(hash).call();
+    }
 }
