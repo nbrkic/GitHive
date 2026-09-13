@@ -11,6 +11,8 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
@@ -301,4 +303,36 @@ public class GitService {
         }
     }
 
+    public String getCurrentBranch(){
+        try{
+            return git.getRepository().getBranch();
+        }catch (Exception e){
+            return "";
+        }
+    }
+
+    public void cherryPick(String hash) throws Exception{
+        Repository repo = git.getRepository();
+        try(RevWalk walk = new RevWalk(repo)){
+            RevCommit commit = walk.parseCommit(ObjectId.fromString(hash));
+            git.cherryPick().include(commit).call();
+        }
+    }
+
+    public List<String> getRemotes() throws Exception {
+        List<String> result = new ArrayList<>();
+        for (RemoteConfig rc : RemoteConfig.getAllRemoteConfigs(git.getRepository().getConfig())) {
+            String url = rc.getURIs().isEmpty() ? "(no url)" : rc.getURIs().get(0).toString();
+            result.add(rc.getName() + "  →  " + url);
+        }
+        return result;
+    }
+
+    public void addRemote(String name, String url) throws Exception {
+        git.remoteAdd().setName(name).setUri(new URIish(url)).call();
+    }
+
+    public void removeRemote(String name) throws Exception {
+        git.remoteRemove().setRemoteName(name).call();
+    }
 }

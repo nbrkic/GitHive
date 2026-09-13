@@ -14,6 +14,7 @@
                 <items>
                     <MenuItem text="Init New Repository" onAction="#handleInitRepo"/>
                     <MenuItem text="Clone Repository" onAction="#handleCloneRepo"/>
+                    <MenuItem fx:id="manageRemotesItem" text="Manage Remotes" onAction="#handleManageRemotes"/>
                     <MenuItem fx:id="closeRepoItem" text="Close Repository" onAction="#handleCloseRepo"/>
                 </items>
             </MenuButton>
@@ -91,8 +92,9 @@
     </center>
 
     <bottom>
-        <HBox style="-fx-background-color: #0a1628; -fx-padding: 4 12;">
+        <HBox style="-fx-background-color: #0a1628; -fx-padding: 4 12;" spacing="16">
             <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: #4d6b8a;"/>
+            <Label fx:id="branchLabel" text="" style="-fx-text-fill: #58a6ff; -fx-font-weight: bold;"/>
         </HBox>
     </bottom>
 

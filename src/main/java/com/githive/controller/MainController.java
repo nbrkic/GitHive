@@ -14,6 +14,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.DirectoryChooser;
 import javafx.fxml.FXMLLoader;
@@ -53,6 +54,8 @@ public class MainController implements Initializable {
     @FXML private Button fetchBtn;
     @FXML private TextField searchField;
     @FXML private MenuItem closeRepoItem;
+    @FXML private Label branchLabel;
+    @FXML private MenuItem manageRemotesItem;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
@@ -89,6 +92,7 @@ public class MainController implements Initializable {
                 gitService.checkoutBranch(branch);
                 statusLabel.setText("Switched to: " + branch);
                 handleRefresh();
+                updateBranchLabel();
             }catch (Exception ex){
                 statusLabel.setText("Error: " + ex.getMessage());
             }
@@ -208,7 +212,28 @@ public class MainController implements Initializable {
                 }
             });
         });
-        commitMenu.getItems().addAll(softReset, mixedReset, hardReset, revertItem);
+        MenuItem cherryPickItem = new MenuItem("Cherry-pick");
+        cherryPickItem.setOnAction(e -> {
+            CommitInfo commit = commitTable.getSelectionModel().getSelectedItem();
+            if (commit == null) return;
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Cherry-pick");
+            confirm.setHeaderText("Kopiraj commit " + commit.shortHash() + " na trenutnu granu?");
+            confirm.setContentText(commit.message());
+            confirm.showAndWait().ifPresent(btn -> {
+                if (btn == ButtonType.OK) {
+                    try {
+                        gitService.cherryPick(commit.fullHash());
+                        handleRefresh();
+                        statusLabel.setText("Cherry-picked: " + commit.shortHash());
+                    } catch (Exception ex) {
+                        statusLabel.setText("Error: " + ex.getMessage());
+                    }
+                }
+            });
+        });
+
+        commitMenu.getItems().addAll(softReset, mixedReset, hardReset, revertItem, cherryPickItem);
         commitTable.setContextMenu(commitMenu);
 
         setRepoLoaded(false);
@@ -250,6 +275,7 @@ public class MainController implements Initializable {
             });
             statusLabel.setText("Loaded: " + dir.getName());
             setRepoLoaded(true);
+            updateBranchLabel();
             try {
                 tagList.setItems(FXCollections.observableArrayList(gitService.getTags()));
             } catch (Exception ignored) {}
@@ -543,6 +569,7 @@ public class MainController implements Initializable {
         fetchBtn.setDisable(!loaded);
         searchField.setDisable(!loaded);
         closeRepoItem.setDisable(!loaded);
+        manageRemotesItem.setDisable(!loaded);
     }
 
     @FXML private void handleFetch(){
@@ -594,4 +621,78 @@ public class MainController implements Initializable {
         statusLabel.setText("Ready");
     }
 
+    private void updateBranchLabel(){
+        if(gitService.isLoaded()){
+            branchLabel.setText("⎇  " + gitService.getCurrentBranch());
+        }
+        else{
+            branchLabel.setText("");
+        }
+    }
+
+    @FXML
+    private void handleManageRemotes() {
+        if (!gitService.isLoaded()) return;
+        try {
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("Manage Remotes");
+            dialog.setHeaderText("Remotes for this repository:");
+
+            ListView<String> remoteList = new ListView<>();
+            remoteList.setPrefHeight(150);
+            remoteList.setItems(FXCollections.observableArrayList(gitService.getRemotes()));
+
+            TextField nameField = new TextField();
+            nameField.setPromptText("Name (npr. origin)");
+            TextField urlField = new TextField();
+            urlField.setPromptText("URL");
+
+            Button addBtn = new Button("Add");
+            addBtn.setMaxWidth(Double.MAX_VALUE);
+            addBtn.setOnAction(e -> {
+                String name = nameField.getText().trim();
+                String url = urlField.getText().trim();
+                if (name.isEmpty() || url.isEmpty()) return;
+                try {
+                    gitService.addRemote(name, url);
+                    remoteList.setItems(FXCollections.observableArrayList(gitService.getRemotes()));
+                    nameField.clear();
+                    urlField.clear();
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
+            });
+
+            Button removeBtn = new Button("Remove Selected");
+            removeBtn.setMaxWidth(Double.MAX_VALUE);
+            removeBtn.setOnAction(e -> {
+                String selected = remoteList.getSelectionModel().getSelectedItem();
+                if (selected == null) return;
+                String remoteName = selected.split("  →  ")[0].trim();
+                try {
+                    gitService.removeRemote(remoteName);
+                    remoteList.setItems(FXCollections.observableArrayList(gitService.getRemotes()));
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
+            });
+
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(8);
+            grid.add(remoteList, 0, 0, 2, 1);
+            grid.add(removeBtn, 0, 1, 2, 1);
+            grid.add(new Label("Name:"), 0, 2);
+            grid.add(nameField, 1, 2);
+            grid.add(new Label("URL:"), 0, 3);
+            grid.add(urlField, 1, 3);
+            grid.add(addBtn, 0, 4, 2, 1);
+
+            dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+            dialog.showAndWait();
+        } catch (Exception e) {
+            statusLabel.setText("Error: " + e.getMessage());
+        }
+    }
 }
