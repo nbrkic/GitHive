@@ -89,9 +89,16 @@ public class ChangesController implements Initializable {
             commitMsg.setStyle("-fx-border-color: #e05252; -fx-border-width: 2;");
             return;
         }
-        if (stagedList.getItems().isEmpty()) return;
+        if (stagedList.getItems().isEmpty() && !amendCheck.isSelected()) return;
         try {
             if (amendCheck.isSelected()) {
+                if (gitService.isLastCommitPushed()) {
+                    Alert warning = new Alert(Alert.AlertType.CONFIRMATION);
+                    warning.setTitle("Upozorenje");
+                    warning.setHeaderText("Ovaj commit je već pushovan na remote.");
+                    warning.setContentText("Amend će promijeniti historiju i sljedeći push će zahtijevati force push. Nastavi?");
+                    if (warning.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+                }
                 gitService.amendCommit(msg);
             } else {
                 gitService.commit(msg);

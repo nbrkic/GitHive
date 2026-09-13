@@ -260,4 +260,22 @@ public class GitService {
     public void amendCommit(String message) throws GitAPIException{
         git.commit().setAmend(true).setMessage(message).call();
     }
+
+    public boolean isLastCommitPushed() {
+        try {
+            Repository repo = git.getRepository();
+            String branch = repo.getBranch();
+            ObjectId localHead = repo.resolve("HEAD");
+            ObjectId remoteHead = repo.resolve("refs/remotes/origin/" + branch);
+            if (remoteHead == null) return false;
+            try (RevWalk walk = new RevWalk(repo)) {
+                RevCommit local = walk.parseCommit(localHead);
+                RevCommit remote = walk.parseCommit(remoteHead);
+                return walk.isMergedInto(local, remote);
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }
