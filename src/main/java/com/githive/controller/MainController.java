@@ -8,6 +8,7 @@ import com.githive.service.RecentReposService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -50,11 +51,14 @@ public class MainController implements Initializable {
     @FXML private Button newTagBtn;
     @FXML private MenuButton stashMenu;
     @FXML private Button fetchBtn;
+    @FXML private TextField searchField;
+    @FXML private MenuItem closeRepoItem;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
     private final RecentReposService recentRepos = new RecentReposService();
     private final GraphLayoutService graphLayout = new GraphLayoutService();
+    private FilteredList<CommitInfo> filteredCommits;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -208,6 +212,14 @@ public class MainController implements Initializable {
         commitTable.setContextMenu(commitMenu);
 
         setRepoLoaded(false);
+        searchField.textProperty().addListener((obs, old, text) -> {
+            if (filteredCommits == null) return;
+            String lower = text.toLowerCase().trim();
+            filteredCommits.setPredicate(c -> lower.isEmpty()
+                    || c.message().toLowerCase().contains(lower)
+                    || c.author().toLowerCase().contains(lower)
+                    || c.shortHash().toLowerCase().contains(lower));
+        });
     }
 
     @FXML
@@ -230,7 +242,8 @@ public class MainController implements Initializable {
             List<CommitInfo> commits = gitService.getCommits(200);
             List<GraphRow> graphRows = graphLayout.compute(commits);
             ObservableList<CommitInfo> items = FXCollections.observableArrayList(commits);
-            commitTable.setItems(items);
+            filteredCommits = new FilteredList<>(items, p -> true);
+            commitTable.setItems(filteredCommits);
             graphCol.setCellValueFactory(d -> {
                 int index = items.indexOf(d.getValue());
                 return new javafx.beans.property.SimpleObjectProperty<>(index >= 0 ? graphRows.get(index) : null);
@@ -528,6 +541,8 @@ public class MainController implements Initializable {
         newTagBtn.setDisable(!loaded);
         stashMenu.setDisable(!loaded);
         fetchBtn.setDisable(!loaded);
+        searchField.setDisable(!loaded);
+        closeRepoItem.setDisable(!loaded);
     }
 
     @FXML private void handleFetch(){
@@ -563,6 +578,20 @@ public class MainController implements Initializable {
         task.setOnSucceeded(e -> statusLabel.setText("Fetch successful."));
         task.setOnFailed(e -> statusLabel.setText("Error: " + task.getException().getMessage()));
         new Thread(task).start();
+    }
+
+    @FXML
+    private void handleCloseRepo() {
+        gitService.closeRepo();
+        commitTable.setItems(FXCollections.observableArrayList());
+        branchList.getItems().clear();
+        tagList.getItems().clear();
+        fileList.getItems().clear();
+        diffView.clear();
+        searchField.clear();
+        filteredCommits = null;
+        setRepoLoaded(false);
+        statusLabel.setText("Ready");
     }
 
 }

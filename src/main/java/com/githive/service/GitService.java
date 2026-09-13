@@ -292,4 +292,13 @@ public class GitService {
             throw new GitAPIException("Revert failed: " + e.getMessage()) {};
         }
     }
+
+    public void closeRepo() {
+        if (git != null) {
+            git.close();
+            git = null;
+            repoDir = null;
+        }
+    }
+
 }

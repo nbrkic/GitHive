@@ -14,6 +14,7 @@
                 <items>
                     <MenuItem text="Init New Repository" onAction="#handleInitRepo"/>
                     <MenuItem text="Clone Repository" onAction="#handleCloneRepo"/>
+                    <MenuItem fx:id="closeRepoItem" text="Close Repository" onAction="#handleCloseRepo"/>
                 </items>
             </MenuButton>
             <Button fx:id="configBtn" text="Config" onAction="#handleConfig"/>
@@ -55,16 +56,19 @@
             </VBox>
 
             <SplitPane orientation="VERTICAL" dividerPositions="0.6">
-
-                <TableView fx:id="commitTable">
-                    <columns>
-                        <TableColumn fx:id="graphCol" text="Graph" prefWidth="120"/>
-                        <TableColumn fx:id="hashCol"    text="Hash"    prefWidth="80"/>
-                        <TableColumn fx:id="messageCol" text="Message" prefWidth="420"/>
-                        <TableColumn fx:id="authorCol"  text="Author"  prefWidth="150"/>
-                        <TableColumn fx:id="dateCol"    text="Date"    prefWidth="150"/>
-                    </columns>
-                </TableView>
+                <VBox>
+                    <TextField fx:id="searchField" promptText="Search commits..."
+                               style="-fx-background-color: #0a1628; -fx-text-fill: #cdd9e5; -fx-border-color: #1e3a5f;"/>
+                    <TableView fx:id="commitTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="graphCol" text="Graph" prefWidth="120"/>
+                            <TableColumn fx:id="hashCol"    text="Hash"    prefWidth="80"/>
+                            <TableColumn fx:id="messageCol" text="Message" prefWidth="420"/>
+                            <TableColumn fx:id="authorCol"  text="Author"  prefWidth="150"/>
+                            <TableColumn fx:id="dateCol"    text="Date"    prefWidth="150"/>
+                        </columns>
+                    </TableView>
+                </VBox>
 
                 <SplitPane dividerPositions="0.28">
 
