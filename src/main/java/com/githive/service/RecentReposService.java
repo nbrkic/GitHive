@@ -28,4 +28,10 @@ public class RecentReposService {
             return new ArrayList<>();
         }
     }
+
+    public void remove(String path) throws IOException{
+        List<String> repos = load();
+        repos.remove(path);
+        Files.writeString(STORAGE, String.join("\n", repos));
+    }
 }

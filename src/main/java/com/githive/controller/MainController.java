@@ -11,7 +11,9 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.stage.DirectoryChooser;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -59,15 +61,7 @@ public class MainController implements Initializable {
             if(file != null && selectedCommit != null) onFileSelected(file);
         });
 
-        List<String> recent = recentRepos.load();
-        if(!recent.isEmpty()){
-            recentMenu.getItems().clear();
-            for(String path : recent){
-                MenuItem item = new MenuItem(path);
-                item.setOnAction(e -> loadRepository(new File(path)));
-                recentMenu.getItems().add(item);
-            }
-        }
+        refreshRecentMenu();
         graphCol.setCellFactory(col -> new GraphCell());
 
         ContextMenu branchMenu = new ContextMenu();
@@ -164,6 +158,7 @@ public class MainController implements Initializable {
 
             try{
                 recentRepos.add(dir.getAbsolutePath());
+                refreshRecentMenu();
             }catch (Exception ignored){}
         }catch (Exception e){
             statusLabel.setText("Error " + e.getMessage());
@@ -403,5 +398,33 @@ public class MainController implements Initializable {
                 }
             }
         });
+    }
+
+    private void refreshRecentMenu(){
+        List<String> recent = recentRepos.load();
+        recentMenu.getItems().clear();
+        if(recent.isEmpty()){
+            recentMenu.getItems().add(new MenuItem("No recent repositories"));
+            return;
+        }
+        for(String path : recent){
+            Label label = new Label(path);
+            label.setMinWidth(220);
+            Button removeBtn = new Button("X");
+            removeBtn.setStyle("-fx-font-size: 10; -fx-padding: 0 5; -fx-cursor: hand;");
+            removeBtn.setOnAction(e -> {
+                e.consume();
+                try{
+                    recentRepos.remove(path);
+                }catch (Exception ignored) {}
+                refreshRecentMenu();
+            });
+            HBox box = new HBox(10, label, removeBtn);
+            box.setAlignment(Pos.CENTER_LEFT);
+            MenuItem item = new MenuItem();
+            item.setGraphic(box);
+            item.setOnAction(e -> loadRepository(new File(path)));
+            recentMenu.getItems().add(item);
+        }
     }
 }
