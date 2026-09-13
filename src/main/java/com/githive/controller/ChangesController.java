@@ -97,6 +97,7 @@ public class ChangesController implements Initializable {
                     warning.setTitle("Upozorenje");
                     warning.setHeaderText("Ovaj commit je već pushovan na remote.");
                     warning.setContentText("Amend će promijeniti historiju i sljedeći push će zahtijevati force push. Nastavi?");
+                    theme(warning.getDialogPane());
                     if (warning.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
                 }
                 gitService.amendCommit(msg);
@@ -131,6 +132,7 @@ public class ChangesController implements Initializable {
         confirm.setTitle("Discard Changes");
         confirm.setHeaderText("Ovo će trajno odbaciti izmjene u odabranim fajlovima.");
         confirm.setContentText("Jesi li siguran?");
+        theme(confirm.getDialogPane());
         confirm.showAndWait().ifPresent(btn -> {
             if (btn == ButtonType.OK) {
                 for (String item : selected) {
@@ -158,6 +160,11 @@ public class ChangesController implements Initializable {
         }catch (Exception e){
             unstagedList.setItems(FXCollections.observableArrayList("Error: " + e.getMessage()));
         }
+    }
+
+    private void theme(DialogPane p) {
+        p.getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
+        p.setGraphic(null);
     }
 
     @FXML

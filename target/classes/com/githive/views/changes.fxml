@@ -5,35 +5,32 @@
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.githive.controller.ChangesController"
-      style="-fx-background-color: #0d1b2a; -fx-padding: 16;">
+      styleClass="changes-root">
 
-    <Label text="CHANGES" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
+    <Label text="CHANGES" styleClass="section-label"/>
 
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
 
-        <VBox spacing="6">
-            <Label text="Unstaged" style="-fx-text-fill: #cdd9e5; -fx-font-size: 12;"/>
-            <ListView fx:id="unstagedList" VBox.vgrow="ALWAYS"
-                      style="-fx-background-color: #0a1628;"/>
-            <HBox spacing="6">
+        <VBox spacing="10" style="-fx-padding: 14 12 12 12;">
+            <Label text="Unstaged"/>
+            <ListView fx:id="unstagedList" VBox.vgrow="ALWAYS"/>
+            <HBox spacing="8">
                 <Button text="Stage Selected" onAction="#handleStage" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                 <Button text="Stage All" onAction="#handleStageAll" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
             </HBox>
-            <HBox spacing="6">
+            <HBox spacing="8">
                 <Button text="Discard Selected" onAction="#handleDiscard" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                        style="-fx-text-fill: #e05252;"/>
+                        style="-fx-text-fill: #f85149;"/>
                 <Button text="Ignore Selected" onAction="#handleIgnore" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
             </HBox>
         </VBox>
 
-        <VBox spacing="6">
-            <Label text="Staged" style="-fx-text-fill: #cdd9e5; -fx-font-size: 12;"/>
-            <ListView fx:id="stagedList" VBox.vgrow="ALWAYS"
-                      style="-fx-background-color: #0a1628;"/>
+        <VBox spacing="10" style="-fx-padding: 14 12 12 12;">
+            <Label text="Staged"/>
+            <ListView fx:id="stagedList" VBox.vgrow="ALWAYS"/>
             <Button text="Unstage Selected" onAction="#handleUnstage" maxWidth="Infinity"/>
             <TextField fx:id="commitMsg" promptText="Commit message"/>
-            <CheckBox fx:id="amendCheck" text="Amend last commit" onAction="#handleAmendToggle"
-                      style="-fx-text-fill: #cdd9e5;"/>
+            <CheckBox fx:id="amendCheck" text="Amend last commit" onAction="#handleAmendToggle"/>
             <Button fx:id="commitBtn" text="Commit" onAction="#handleCommit"
                     styleClass="accent" maxWidth="Infinity"/>
         </VBox>

@@ -4,8 +4,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.githive.controller.MainController"
-            style="-fx-background-color: #0d1b2a;">
+            fx:controller="com.githive.controller.MainController">
 
     <top>
         <ToolBar>
@@ -31,7 +30,7 @@
             </MenuButton>
             <Button fx:id="changesBtn" text="Changes" onAction="#handleShowChanges"/>
             <Button fx:id="conflictsBtn" text="Conflicts" onAction="#handleConflicts"
-                    style="-fx-text-fill: #e05252;"/>
+                    style="-fx-text-fill: #f85149;"/>
             <Separator orientation="VERTICAL"/>
             <Button fx:id="fetchBtn" text="Fetch" onAction="#handleFetch"/>
             <Button fx:id="pullBtn" text="Pull" onAction="#handlePull"/>
@@ -48,55 +47,72 @@
     </top>
 
     <center>
-        <SplitPane dividerPositions="0.22">
+        <StackPane>
 
-            <VBox style="-fx-background-color: #0a1628; -fx-padding: 10;" spacing="6">
-                <Label text="BRANCHES" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
-                <Button fx:id="newBranchBtn" text="+ New Branch" onAction="#handleNewBranch" maxWidth="Infinity" style="-fx-font-size: 11;"/>
-                <ListView fx:id="branchList" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;"/>
-                <Label text="TAGS" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
-                <Button fx:id="newTagBtn" text="+ New Tag" onAction="#handleNewTag" maxWidth="Infinity" style="-fx-font-size: 11;"/>
-                <ListView fx:id="tagList" prefHeight="120" style="-fx-background-color: transparent;"/>
+            <!-- Welcome screen — shown when no repo is loaded -->
+            <VBox fx:id="welcomePane" alignment="CENTER" spacing="16" styleClass="welcome-pane">
+                <Label text="GitHive" styleClass="welcome-title"/>
+                <Label text="Lightweight Git GUI client" styleClass="welcome-subtitle"/>
+                <VBox spacing="10" alignment="CENTER" style="-fx-padding: 32 0 0 0;">
+                    <Button text="Open Repository" onAction="#handleOpenRepo" styleClass="welcome-btn"/>
+                    <Button text="Clone Repository" onAction="#handleCloneRepo" styleClass="welcome-btn"/>
+                    <Button text="Init New Repository" onAction="#handleInitRepo" styleClass="welcome-btn"/>
+                </VBox>
+                <Label text="Ctrl+O  ·  Open   |   Recent repositories → toolbar"
+                       styleClass="welcome-hint"/>
+                <VBox fx:id="welcomeRecentBox" spacing="4" alignment="CENTER"
+                      style="-fx-padding: 24 0 0 0; -fx-max-width: 420;"/>
             </VBox>
 
-            <SplitPane orientation="VERTICAL" dividerPositions="0.6">
-                <VBox>
-                    <TextField fx:id="searchField" promptText="Search commits..."
-                               style="-fx-background-color: #0a1628; -fx-text-fill: #cdd9e5; -fx-border-color: #1e3a5f;"/>
-                    <TableView fx:id="commitTable" VBox.vgrow="ALWAYS">
-                        <columns>
-                            <TableColumn fx:id="graphCol" text="Graph" prefWidth="120"/>
-                            <TableColumn fx:id="hashCol"    text="Hash"    prefWidth="80"/>
-                            <TableColumn fx:id="messageCol" text="Message" prefWidth="420"/>
-                            <TableColumn fx:id="authorCol"  text="Author"  prefWidth="150"/>
-                            <TableColumn fx:id="dateCol"    text="Date"    prefWidth="150"/>
-                        </columns>
-                    </TableView>
+            <!-- Main content — shown when a repo is loaded -->
+            <SplitPane fx:id="mainSplit" dividerPositions="0.22">
+
+                <VBox styleClass="sidebar" spacing="6">
+                    <Label text="BRANCHES" styleClass="section-label"/>
+                    <Button fx:id="newBranchBtn" text="+ New Branch" onAction="#handleNewBranch" maxWidth="Infinity"/>
+                    <ListView fx:id="branchList" VBox.vgrow="ALWAYS"/>
+                    <Label text="TAGS" styleClass="section-label"/>
+                    <Button fx:id="newTagBtn" text="+ New Tag" onAction="#handleNewTag" maxWidth="Infinity"/>
+                    <ListView fx:id="tagList" prefHeight="120"/>
                 </VBox>
 
-                <SplitPane dividerPositions="0.28">
-
-                    <VBox style="-fx-background-color: #0a1628; -fx-padding: 10;">
-                        <Label text="CHANGED FILES" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
-                        <ListView fx:id="fileList" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;"/>
+                <SplitPane orientation="VERTICAL" dividerPositions="0.6">
+                    <VBox>
+                        <TextField fx:id="searchField" promptText="Search commits..."/>
+                        <TableView fx:id="commitTable" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="graphCol" text="Graph" prefWidth="120"/>
+                                <TableColumn fx:id="hashCol"    text="Hash"    prefWidth="80"/>
+                                <TableColumn fx:id="messageCol" text="Message" prefWidth="420"/>
+                                <TableColumn fx:id="authorCol"  text="Author"  prefWidth="150"/>
+                                <TableColumn fx:id="dateCol"    text="Date"    prefWidth="150"/>
+                            </columns>
+                        </TableView>
                     </VBox>
 
-                    <VBox style="-fx-padding: 10; -fx-background-color: #0d1b2a;">
-                        <Label text="DIFF" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
-                        <TextArea fx:id="diffView" editable="false" wrapText="false" VBox.vgrow="ALWAYS"
-                                  style="-fx-background-color: #0a1220; -fx-text-fill: #cdd9e5; -fx-font-family: monospace; -fx-font-size: 12;"/>
-                    </VBox>
+                    <SplitPane dividerPositions="0.40">
+
+                        <VBox styleClass="sidebar">
+                            <Label text="CHANGED FILES" styleClass="section-label"/>
+                            <ListView fx:id="fileList" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+
+                        <VBox style="-fx-padding: 10;">
+                            <Label text="DIFF" styleClass="section-label"/>
+                            <ListView fx:id="diffView" styleClass="diff-view" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+
+                    </SplitPane>
 
                 </SplitPane>
-
-
             </SplitPane>
-        </SplitPane>
+
+        </StackPane>
     </center>
 
     <bottom>
-        <HBox style="-fx-background-color: #0a1628; -fx-padding: 4 12;" spacing="16">
-            <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: #4d6b8a;"/>
+        <HBox styleClass="status-bar" spacing="16">
+            <Label fx:id="statusLabel" text="Ready"/>
             <Label fx:id="branchLabel" text="" style="-fx-text-fill: #58a6ff; -fx-font-weight: bold;"/>
         </HBox>
     </bottom>

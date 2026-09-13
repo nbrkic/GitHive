@@ -27,6 +27,8 @@ public class MainApp extends Application {
             alert.setTitle("GitHive");
             alert.setHeaderText("Already running");
             alert.setContentText("GitHive is already open.");
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
+            alert.getDialogPane().setGraphic(null);
             alert.showAndWait();
             Platform.exit();
             return;
@@ -36,7 +38,8 @@ public class MainApp extends Application {
             try {
                 Application.setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/githive/views/main.fxml"));
-                Scene scene = new Scene(loader.load(), 1200, 750);
+                Scene scene = new Scene(loader.load(), 1440, 860);
+                scene.getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
                 stage.setTitle("GitHive");
                 stage.setScene(scene);
                 stage.setOnCloseRequest(e -> {
@@ -57,11 +60,11 @@ public class MainApp extends Application {
         Label title = new Label("GitHive");
         title.setStyle("-fx-font-size: 38; -fx-font-weight: bold; -fx-text-fill: #58a6ff;");
         Label sub = new Label("Git GUI Client");
-        sub.setStyle("-fx-font-size: 13; -fx-text-fill: #4d6b8a;");
+        sub.setStyle("-fx-font-size: 13; -fx-text-fill: #8b949e;");
 
         VBox box = new VBox(8, title, sub);
         box.setAlignment(Pos.CENTER);
-        box.setStyle("-fx-background-color: #0d1b2a; -fx-padding: 40; -fx-border-color: #1e3a5f; -fx-border-width: 1;");
+        box.setStyle("-fx-background-color: #0d1117; -fx-padding: 40; -fx-border-color: #30363d; -fx-border-width: 1;");
 
         splash.setScene(new Scene(box, 320, 160));
         splash.show();

@@ -20,6 +20,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.fxml.FXMLLoader;
@@ -30,6 +31,7 @@ import org.eclipse.jgit.api.ResetCommand;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -47,7 +49,7 @@ public class MainController implements Initializable {
     @FXML private TableColumn<CommitInfo, String> dateCol;
     @FXML private Label statusLabel;
     @FXML private ListView<String> fileList;
-    @FXML private TextArea  diffView;
+    @FXML private ListView<String> diffView;
     @FXML private MenuButton recentMenu;
     @FXML private TableColumn<CommitInfo, GraphRow> graphCol;
     @FXML private ListView<String> tagList;
@@ -65,6 +67,9 @@ public class MainController implements Initializable {
     @FXML private Label branchLabel;
     @FXML private MenuItem manageRemotesItem;
     @FXML private Button conflictsBtn;
+    @FXML private VBox welcomePane;
+    @FXML private VBox welcomeRecentBox;
+    @FXML private SplitPane mainSplit;
 
     private final GitService gitService = new GitService();
     private final CredentialsService credentialsService = new CredentialsService();
@@ -144,6 +149,7 @@ public class MainController implements Initializable {
             dialog.setTitle("Rename Branch");
             dialog.setHeaderText("Novo ime za granu: " + branch);
             dialog.setContentText("Ime:");
+            theme(dialog.getDialogPane());
             dialog.showAndWait().ifPresent(newName -> {
                 try {
                     gitService.renameBranch(branch, newName);
@@ -163,6 +169,7 @@ public class MainController implements Initializable {
             confirm.setTitle("Rebase");
             confirm.setHeaderText("Rebase " + branch + " onto trenutne grane?");
             confirm.setContentText("Ovo će premjestiti commitove sa " + branch + " na vrh trenutne grane.");
+            theme(confirm.getDialogPane());
             confirm.showAndWait().ifPresent(btn -> {
                 if (btn == ButtonType.OK) {
                     try {
@@ -208,6 +215,7 @@ public class MainController implements Initializable {
                 Dialog<ButtonType> dialog = new Dialog<>();
                 dialog.setTitle("File History");
                 dialog.setHeaderText(path);
+                theme(dialog.getDialogPane());
 
                 TableView<CommitInfo> historyTable = new TableView<>();
                 historyTable.setPrefSize(700, 400);
@@ -277,6 +285,7 @@ public class MainController implements Initializable {
             confirm.setTitle("Hard Reset");
             confirm.setHeaderText("Hard reset će trajno obrisati sve promjene.");
             confirm.setContentText("Jesi li siguran?");
+            theme(confirm.getDialogPane());
             confirm.showAndWait().ifPresent(btn -> {
                 if (btn == ButtonType.OK) {
                     try {
@@ -298,6 +307,7 @@ public class MainController implements Initializable {
             confirm.setTitle("Revert Commit");
             confirm.setHeaderText("Napraviće se novi commit koji poništava: " + commit.shortHash());
             confirm.setContentText("Nastavi?");
+            theme(confirm.getDialogPane());
             confirm.showAndWait().ifPresent(btn -> {
                 if (btn == ButtonType.OK) {
                     try {
@@ -318,6 +328,7 @@ public class MainController implements Initializable {
             confirm.setTitle("Cherry-pick");
             confirm.setHeaderText("Kopiraj commit " + commit.shortHash() + " na trenutnu granu?");
             confirm.setContentText(commit.message());
+            theme(confirm.getDialogPane());
             confirm.showAndWait().ifPresent(btn -> {
                 if (btn == ButtonType.OK) {
                     try {
@@ -333,6 +344,41 @@ public class MainController implements Initializable {
 
         commitMenu.getItems().addAll(softReset, mixedReset, hardReset, revertItem, cherryPickItem);
         commitTable.setContextMenu(commitMenu);
+
+        diffView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String line, boolean empty) {
+                super.updateItem(line, empty);
+                if (empty || line == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(line);
+                    if (line.startsWith("+") && !line.startsWith("+++")) {
+                        setStyle("-fx-text-fill: #3fb950; -fx-background-color: rgba(63,185,80,0.08);");
+                    } else if (line.startsWith("-") && !line.startsWith("---")) {
+                        setStyle("-fx-text-fill: #f85149; -fx-background-color: rgba(248,81,73,0.08);");
+                    } else if (line.startsWith("@@")) {
+                        setStyle("-fx-text-fill: #58a6ff;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
+        statusLabel.textProperty().addListener((obs, old, text) -> {
+            if (text == null) return;
+            if (text.startsWith("Error")) {
+                statusLabel.setStyle("-fx-text-fill: #f85149;");
+            } else if (text.startsWith("Loaded:") || text.startsWith("Cloned:") || text.startsWith("Initialized")) {
+                statusLabel.setStyle("-fx-text-fill: #58a6ff;");
+            } else if (text.equals("Ready")) {
+                statusLabel.setStyle("-fx-text-fill: #484f58;");
+            } else {
+                statusLabel.setStyle("-fx-text-fill: #3fb950;");
+            }
+        });
 
         setRepoLoaded(false);
         searchField.textProperty().addListener((obs, old, text) -> {
@@ -379,6 +425,7 @@ public class MainController implements Initializable {
                 alert.setTitle("Greška");
                 alert.setHeaderText("Repository not found:");
                 alert.setContentText(dir.getAbsolutePath());
+                theme(alert.getDialogPane());
                 alert.showAndWait();
                 try { recentRepos.remove(dir.getAbsolutePath()); refreshRecentMenu(); } catch (Exception ignored) {}
                 return;
@@ -422,7 +469,7 @@ public class MainController implements Initializable {
 
    private void onCommitSelected(CommitInfo commit){
         selectedCommit = commit;
-        diffView.clear();
+        diffView.getItems().clear();
         try{
             fileList.setItems(FXCollections.observableArrayList(gitService.getChangedFiles(commit.fullHash())));
         }catch (Exception e){
@@ -434,7 +481,8 @@ public class MainController implements Initializable {
    private void handleShowChanges(){
         try{
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/githive/views/changes.fxml"));
-            Scene scene = new Scene(loader.load(), 700, 500);
+            Scene scene = new Scene(loader.load(), 920, 640);
+            scene.getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
             ChangesController ctrl = loader.getController();
             ctrl.setGitService(gitService);
             ctrl.setOnCommitSuccess(msg -> {
@@ -453,8 +501,8 @@ public class MainController implements Initializable {
    private void onFileSelected(String fileEntry){
         try{
             String diff = gitService.getFileDiff(selectedCommit.fullHash(), fileEntry);
-            diffView.setText(diff);
-            diffView.setScrollTop(0);
+            diffView.setItems(FXCollections.observableArrayList(Arrays.asList(diff.split("\n", -1))));
+            diffView.scrollTo(0);
         }catch (Exception e){
             statusLabel.setText("Error: " + e.getMessage());
         }
@@ -487,6 +535,7 @@ public class MainController implements Initializable {
         userDialog.setTitle(isPush ? "Push" : "Pull");
         userDialog.setHeaderText("GitHub username:");
         userDialog.setContentText("Username:");
+        theme(userDialog.getDialogPane());
         Optional<String> username = userDialog.showAndWait();
         if (username.isEmpty()) return;
 
@@ -494,6 +543,7 @@ public class MainController implements Initializable {
         tokenDialog.setTitle(isPush ? "Push" : "Pull");
         tokenDialog.setHeaderText("Personal Access Token (PAT):");
         tokenDialog.setContentText("Token:");
+        theme(tokenDialog.getDialogPane());
         Optional<String> token = tokenDialog.showAndWait();
         if (token.isEmpty()) return;
 
@@ -501,6 +551,7 @@ public class MainController implements Initializable {
         rememberAlert.setTitle("Zapamti kredencijale?");
         rememberAlert.setHeaderText(null);
         rememberAlert.setContentText("Sačuvati username i token lokalno?");
+        theme(rememberAlert.getDialogPane());
         rememberAlert.showAndWait().ifPresent(btn -> {
             if (btn == ButtonType.OK) {
                 try { credentialsService.save(username.get(), token.get()); } catch (Exception ignored) {}
@@ -521,6 +572,7 @@ public class MainController implements Initializable {
         dialog.setTitle("New Branch");
         dialog.setHeaderText("Enter branch name:");
         dialog.setContentText("Name:");
+        theme(dialog.getDialogPane());
         dialog.showAndWait().ifPresent(name -> {
             try{
                 gitService.createBranch(name);
@@ -564,6 +616,7 @@ public class MainController implements Initializable {
             alert.setTitle("Stash List");
             alert.setHeaderText(null);
             alert.setContentText(msg);
+            theme(alert.getDialogPane());
             alert.showAndWait();
         }catch (Exception e){
             statusLabel.setText("Error: " + e.getMessage());
@@ -577,6 +630,7 @@ public class MainController implements Initializable {
         dialog.setTitle("New Tag");
         dialog.setHeaderText("Tag current commit:");
         dialog.setContentText("Tag name");
+        theme(dialog.getDialogPane());
         dialog.showAndWait().ifPresent(name -> {
             try{
                 gitService.createTag(name);
@@ -609,6 +663,7 @@ public class MainController implements Initializable {
         urlDialog.setTitle("Clone repository");
         urlDialog.setHeaderText("Enter repository URL:");
         urlDialog.setContentText("URL:");
+        theme(urlDialog.getDialogPane());
         Optional<String> url = urlDialog.showAndWait();
         if(url.isEmpty()) return;
 
@@ -645,6 +700,7 @@ public class MainController implements Initializable {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Git Config");
         dialog.setHeaderText("Local repository config:");
+        theme(dialog.getDialogPane());
 
         javafx.scene.control.TextField nameField = new javafx.scene.control.TextField(gitService.getConfigName());
         javafx.scene.control.TextField emailField = new javafx.scene.control.TextField(gitService.getConfigEmail());
@@ -712,6 +768,60 @@ public class MainController implements Initializable {
         searchField.setDisable(!loaded);
         closeRepoItem.setDisable(!loaded);
         manageRemotesItem.setDisable(!loaded);
+        welcomePane.setVisible(!loaded);
+        welcomePane.setManaged(!loaded);
+        mainSplit.setVisible(loaded);
+        mainSplit.setManaged(loaded);
+        if (!loaded) refreshWelcomeRecents();
+    }
+
+    private void refreshWelcomeRecents() {
+        welcomeRecentBox.getChildren().clear();
+        List<String> recent = recentRepos.load();
+
+        Label header = new Label("RECENT");
+        header.getStyleClass().add("section-label");
+        welcomeRecentBox.getChildren().add(header);
+
+        if (recent.isEmpty()) {
+            Label empty = new Label("No recent repositories");
+            empty.setStyle("-fx-text-fill: #484f58; -fx-font-size: 12px; -fx-padding: 8 0 0 0;");
+            welcomeRecentBox.getChildren().add(empty);
+            return;
+        }
+
+        for (String path : recent) {
+            String name = new File(path).getName();
+
+            Label nameLabel = new Label(name);
+            nameLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #c9d1d9; -fx-font-weight: bold;");
+
+            Label pathLabel = new Label(path);
+            pathLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #8b949e;");
+
+            VBox info = new VBox(2, nameLabel, pathLabel);
+            HBox.setHgrow(info, Priority.ALWAYS);
+
+            Button removeBtn = new Button("✕");
+            removeBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #484f58; -fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 2 6;");
+            removeBtn.setOnMouseEntered(e -> removeBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #f85149; -fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 2 6;"));
+            removeBtn.setOnMouseExited(e -> removeBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #484f58; -fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 2 6;"));
+            removeBtn.setOnAction(e -> {
+                e.consume();
+                try { recentRepos.remove(path); } catch (Exception ignored) {}
+                refreshRecentMenu();
+                refreshWelcomeRecents();
+            });
+
+            HBox row = new HBox(12, info, removeBtn);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setStyle("-fx-padding: 8 12; -fx-background-radius: 6; -fx-cursor: hand;");
+            row.setOnMouseClicked(e -> loadRepository(new File(path)));
+            row.setOnMouseEntered(e -> row.setStyle("-fx-padding: 8 12; -fx-background-color: #161b22; -fx-background-radius: 6; -fx-cursor: hand;"));
+            row.setOnMouseExited(e -> row.setStyle("-fx-padding: 8 12; -fx-background-color: transparent; -fx-background-radius: 6; -fx-cursor: hand;"));
+
+            welcomeRecentBox.getChildren().add(row);
+        }
     }
 
     @FXML private void handleFetch(){
@@ -731,6 +841,7 @@ public class MainController implements Initializable {
         userDialog.setTitle("Fetch");
         userDialog.setHeaderText("GitHub username:");
         userDialog.setContentText("Username:");
+        theme(userDialog.getDialogPane());
         Optional<String> username = userDialog.showAndWait();
         if (username.isEmpty()) return;
 
@@ -738,6 +849,7 @@ public class MainController implements Initializable {
         tokenDialog.setTitle("Fetch");
         tokenDialog.setHeaderText("Personal Access Token (PAT):");
         tokenDialog.setContentText("Token:");
+        theme(tokenDialog.getDialogPane());
         Optional<String> token = tokenDialog.showAndWait();
         if (token.isEmpty()) return;
 
@@ -745,6 +857,7 @@ public class MainController implements Initializable {
         rememberAlert.setTitle("Zapamti kredencijale?");
         rememberAlert.setHeaderText(null);
         rememberAlert.setContentText("Sačuvati username i token lokalno?");
+        theme(rememberAlert.getDialogPane());
         rememberAlert.showAndWait().ifPresent(btn -> {
             if (btn == ButtonType.OK) {
                 try { credentialsService.save(username.get(), token.get()); } catch (Exception ignored) {}
@@ -778,7 +891,7 @@ public class MainController implements Initializable {
         branchList.getItems().clear();
         tagList.getItems().clear();
         fileList.getItems().clear();
-        diffView.clear();
+        diffView.getItems().clear();
         searchField.clear();
         filteredCommits = null;
         conflictsBtn.setVisible(false);
@@ -864,6 +977,7 @@ public class MainController implements Initializable {
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("Manage Remotes");
             dialog.setHeaderText("Remotes for this repository:");
+            theme(dialog.getDialogPane());
 
             ListView<String> remoteList = new ListView<>();
             remoteList.setPrefHeight(150);
@@ -923,6 +1037,11 @@ public class MainController implements Initializable {
         }
     }
 
+    private void theme(DialogPane p) {
+        p.getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
+        p.setGraphic(null);
+    }
+
     @FXML
     private void handleConflicts() {
         if (!gitService.isLoaded()) return;
@@ -936,6 +1055,7 @@ public class MainController implements Initializable {
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("Resolve Conflicts");
             dialog.setHeaderText("Konfliktni fajlovi:");
+            theme(dialog.getDialogPane());
 
             ListView<String> conflictList = new ListView<>(FXCollections.observableArrayList(conflicts));
             conflictList.setPrefHeight(120);
@@ -1014,6 +1134,7 @@ public class MainController implements Initializable {
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
                 confirm.setTitle("Abort Merge");
                 confirm.setHeaderText("Odustati od mergea? Sve izmjene će biti vraćene.");
+                theme(confirm.getDialogPane());
                 confirm.showAndWait().ifPresent(btn -> {
                     if (btn == ButtonType.OK) {
                         try {
