@@ -12,6 +12,8 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -102,6 +104,7 @@ public class MainController implements Initializable {
                 gitService.checkoutBranch(branch);
                 statusLabel.setText("Switched to: " + branch);
                 handleRefresh();
+                refreshBranchList();
                 updateBranchLabel();
             }catch (Exception ex){
                 statusLabel.setText("Error: " + ex.getMessage());
@@ -113,7 +116,7 @@ public class MainController implements Initializable {
             if (branch == null) return;
             try {
                 gitService.deleteBranch(branch);
-                branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
+                refreshBranchList();
                 statusLabel.setText("Deleted branch: " + branch);
             } catch (Exception ex) {
                 statusLabel.setText("Error: " + ex.getMessage());
@@ -133,7 +136,47 @@ public class MainController implements Initializable {
             }
         });
 
-        branchMenu.getItems().addAll(checkoutItem, deleteItem, mergeItem);
+        MenuItem renameItem = new MenuItem("Rename");
+        renameItem.setOnAction(e -> {
+            String branch = branchList.getSelectionModel().getSelectedItem();
+            if (branch == null) return;
+            TextInputDialog dialog = new TextInputDialog(branch);
+            dialog.setTitle("Rename Branch");
+            dialog.setHeaderText("Novo ime za granu: " + branch);
+            dialog.setContentText("Ime:");
+            dialog.showAndWait().ifPresent(newName -> {
+                try {
+                    gitService.renameBranch(branch, newName);
+                    refreshBranchList();
+                    statusLabel.setText("Branch renamed: " + branch + " → " + newName);
+                } catch (Exception ex) {
+                    statusLabel.setText("Error: " + ex.getMessage());
+                }
+            });
+        });
+
+        MenuItem rebaseItem = new MenuItem("Rebase onto current");
+        rebaseItem.setOnAction(e -> {
+            String branch = branchList.getSelectionModel().getSelectedItem();
+            if (branch == null) return;
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Rebase");
+            confirm.setHeaderText("Rebase " + branch + " onto trenutne grane?");
+            confirm.setContentText("Ovo će premjestiti commitove sa " + branch + " na vrh trenutne grane.");
+            confirm.showAndWait().ifPresent(btn -> {
+                if (btn == ButtonType.OK) {
+                    try {
+                        gitService.rebase(branch);
+                        handleRefresh();
+                        statusLabel.setText("Rebase completed: " + branch);
+                    } catch (Exception ex) {
+                        statusLabel.setText("Error: " + ex.getMessage());
+                    }
+                }
+            });
+        });
+
+        branchMenu.getItems().addAll(checkoutItem, deleteItem, mergeItem, renameItem, rebaseItem);
 
         branchList.setContextMenu(branchMenu);
 
@@ -302,6 +345,18 @@ public class MainController implements Initializable {
         });
         conflictsBtn.setVisible(false);
         conflictsBtn.setManaged(false);
+
+        Platform.runLater(() -> openRepoBtn.getScene().addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.isControlDown()) {
+                switch (e.getCode()) {
+                    case R -> { if (gitService.isLoaded()) handleRefresh(); e.consume(); }
+                    case O -> { handleOpenRepo(); e.consume(); }
+                    case F -> { searchField.requestFocus(); e.consume(); }
+                    case C -> { if (e.isShiftDown() && gitService.isLoaded()) handleShowChanges(); e.consume(); }
+                    default -> {}
+                }
+            }
+        }));
     }
 
     @FXML
@@ -329,7 +384,7 @@ public class MainController implements Initializable {
                 return;
             }
             gitService.open(dir);
-            branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
+            refreshBranchList();
             List<CommitInfo> commits = gitService.getCommits(200);
             List<GraphRow> graphRows = graphLayout.compute(commits);
             ObservableList<CommitInfo> items = FXCollections.observableArrayList(commits);
@@ -469,7 +524,7 @@ public class MainController implements Initializable {
         dialog.showAndWait().ifPresent(name -> {
             try{
                 gitService.createBranch(name);
-                branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
+                refreshBranchList();
                 statusLabel.setText("Branch created: " + name);
             }catch (Exception e){
                 statusLabel.setText("Error: " + e.getMessage());
@@ -755,6 +810,31 @@ public class MainController implements Initializable {
     private void stopAutoRefresh() {
         if (scheduler != null && !scheduler.isShutdown()) {
             scheduler.shutdownNow();
+        }
+    }
+
+    private void refreshBranchList() {
+        try {
+            String current = gitService.getCurrentBranch();
+            branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
+            branchList.setCellFactory(lv -> new ListCell<>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle("");
+                    } else if (item.equals(current)) {
+                        setText(item);
+                        setStyle("-fx-font-weight: bold; -fx-text-fill: #58a6ff;");
+                    } else {
+                        setText(item);
+                        setStyle("");
+                    }
+                }
+            });
+        } catch (Exception e) {
+            statusLabel.setText("Error: " + e.getMessage());
         }
     }
 

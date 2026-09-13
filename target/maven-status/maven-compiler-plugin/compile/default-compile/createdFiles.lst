@@ -3,7 +3,9 @@ com\githive\model\GraphRow.class
 com\githive\controller\GraphCell.class
 com\githive\controller\MainController$1.class
 com\githive\service\GitService$1.class
+com\githive\controller\MainController$4.class
 com\githive\controller\ChangesController.class
 com\githive\service\GraphLayoutService.class
+com\githive\controller\MainController$3.class
 com\githive\service\CredentialsService.class
 com\githive\service\RecentReposService.class

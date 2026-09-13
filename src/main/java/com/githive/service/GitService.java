@@ -300,6 +300,14 @@ public class GitService {
         }
     }
 
+    public void rebase(String branchName) throws GitAPIException {
+        git.rebase().setUpstream(branchName).call();
+    }
+
+    public void renameBranch(String oldName, String newName) throws GitAPIException {
+        git.branchRename().setOldName(oldName).setNewName(newName).call();
+    }
+
     public String getCurrentHead() {
         try {
             return git.getRepository().resolve("HEAD").getName();
