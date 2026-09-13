@@ -40,6 +40,14 @@ public class MainController implements Initializable {
     @FXML private MenuButton recentMenu;
     @FXML private TableColumn<CommitInfo, GraphRow> graphCol;
     @FXML private ListView<String> tagList;
+    @FXML private Button refreshBtn;
+    @FXML private Button changesBtn;
+    @FXML private Button pullBtn;
+    @FXML private Button pushBtn;
+    @FXML private Button configBtn;
+    @FXML private Button newBranchBtn;
+    @FXML private Button newTagBtn;
+    @FXML private MenuButton stashMenu;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
@@ -124,6 +132,7 @@ public class MainController implements Initializable {
         });
         tagMenu.getItems().add(deleteTagItem);
         tagList.setContextMenu(tagMenu);
+        setRepoLoaded(false);
     }
 
     @FXML
@@ -152,6 +161,7 @@ public class MainController implements Initializable {
                 return new javafx.beans.property.SimpleObjectProperty<>(index >= 0 ? graphRows.get(index) : null);
             });
             statusLabel.setText("Loaded: " + dir.getName());
+            setRepoLoaded(true);
             try {
                 tagList.setItems(FXCollections.observableArrayList(gitService.getTags()));
             } catch (Exception ignored) {}
@@ -432,4 +442,16 @@ public class MainController implements Initializable {
             recentMenu.getItems().add(item);
         }
     }
+
+    private void setRepoLoaded(boolean loaded) {
+        refreshBtn.setDisable(!loaded);
+        changesBtn.setDisable(!loaded);
+        pullBtn.setDisable(!loaded);
+        pushBtn.setDisable(!loaded);
+        configBtn.setDisable(!loaded);
+        newBranchBtn.setDisable(!loaded);
+        newTagBtn.setDisable(!loaded);
+        stashMenu.setDisable(!loaded);
+    }
+
 }

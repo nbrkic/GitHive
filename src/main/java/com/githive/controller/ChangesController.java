@@ -34,6 +34,7 @@ public class ChangesController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         unstagedList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        commitMsg.setOnAction(e -> handleCommit());
     }
 
     public void refresh() {

@@ -16,22 +16,22 @@
                     <MenuItem text="Clone Repository" onAction="#handleCloneRepo"/>
                 </items>
             </MenuButton>
-            <Button text="Config" onAction="#handleConfig"/>
+            <Button fx:id="configBtn" text="Config" onAction="#handleConfig"/>
             <Separator orientation="VERTICAL"/>
             <Separator orientation="VERTICAL"/>
             <Button fx:id="openRepoBtn" text="Open Repo" onAction="#handleOpenRepo"/>
-            <Button text="Refresh" onAction="#handleRefresh"/>
+            <Button fx:id="refreshBtn" text="Refresh" onAction="#handleRefresh"/>
             <MenuButton fx:id="recentMenu" text="Recent">
                 <items>
                     <MenuItem fx:id="noRecentItem" text="No recent repositories"/>
                 </items>
             </MenuButton>
-            <Button text="Changes" onAction="#handleShowChanges"/>
+            <Button fx:id="changesBtn" text="Changes" onAction="#handleShowChanges"/>
             <Separator orientation="VERTICAL"/>
-            <Button text="Pull" onAction="#handlePull"/>
-            <Button text="Push" onAction="#handlePush"/>
+            <Button fx:id="pullBtn" text="Pull" onAction="#handlePull"/>
+            <Button fx:id="pushBtn" text="Push" onAction="#handlePush"/>
             <Separator orientation="VERTICAL"/>
-            <MenuButton text="Stash">
+            <MenuButton fx:id="stashMenu" text="Stash">
                 <items>
                     <MenuItem text="Stash Save" onAction="#handleStashSave"/>
                     <MenuItem text="Stash Pop" onAction="#handleStashPop"/>
@@ -46,10 +46,10 @@
 
             <VBox style="-fx-background-color: #0a1628; -fx-padding: 10;" spacing="6">
                 <Label text="BRANCHES" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
-                <Button text="+ New Branch" onAction="#handleNewBranch" maxWidth="Infinity" style="-fx-font-size: 11;"/>
+                <Button fx:id="newBranchBtn" text="+ New Branch" onAction="#handleNewBranch" maxWidth="Infinity" style="-fx-font-size: 11;"/>
                 <ListView fx:id="branchList" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;"/>
                 <Label text="TAGS" style="-fx-text-fill: #4d6b8a; -fx-font-size: 10; -fx-font-weight: bold;"/>
-                <Button text="+ New Tag" onAction="#handleNewTag" maxWidth="Infinity" style="-fx-font-size: 11;"/>
+                <Button fx:id="newTagBtn" text="+ New Tag" onAction="#handleNewTag" maxWidth="Infinity" style="-fx-font-size: 11;"/>
                 <ListView fx:id="tagList" prefHeight="120" style="-fx-background-color: transparent;"/>
             </VBox>
 
