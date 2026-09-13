@@ -16,6 +16,7 @@
                     <MenuItem text="Clone Repository" onAction="#handleCloneRepo"/>
                     <MenuItem fx:id="manageRemotesItem" text="Manage Remotes" onAction="#handleManageRemotes"/>
                     <MenuItem fx:id="closeRepoItem" text="Close Repository" onAction="#handleCloseRepo"/>
+                    <MenuItem text="Clear Saved Credentials" onAction="#handleClearCredentials"/>
                 </items>
             </MenuButton>
             <Button fx:id="configBtn" text="Config" onAction="#handleConfig"/>

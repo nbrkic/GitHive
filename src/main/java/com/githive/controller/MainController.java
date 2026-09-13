@@ -2,6 +2,7 @@ package com.githive.controller;
 
 import com.githive.model.CommitInfo;
 import com.githive.model.GraphRow;
+import com.githive.service.CredentialsService;
 import com.githive.service.GitService;
 import com.githive.service.GraphLayoutService;
 import com.githive.service.RecentReposService;
@@ -60,6 +61,7 @@ public class MainController implements Initializable {
     @FXML private Button conflictsBtn;
 
     private final GitService gitService = new GitService();
+    private final CredentialsService credentialsService = new CredentialsService();
     private CommitInfo selectedCommit;
     private final RecentReposService recentRepos = new RecentReposService();
     private final GraphLayoutService graphLayout = new GraphLayoutService();
@@ -311,6 +313,15 @@ public class MainController implements Initializable {
 
     private void loadRepository(File dir){
         try{
+            if (!dir.exists() || !dir.isDirectory()) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Greška");
+                alert.setHeaderText("Repository not found:");
+                alert.setContentText(dir.getAbsolutePath());
+                alert.showAndWait();
+                try { recentRepos.remove(dir.getAbsolutePath()); refreshRecentMenu(); } catch (Exception ignored) {}
+                return;
+            }
             gitService.open(dir);
             branchList.setItems(FXCollections.observableArrayList(gitService.getBranches()));
             List<CommitInfo> commits = gitService.getCommits(200);
@@ -398,35 +409,46 @@ public class MainController implements Initializable {
         askCredentialsAndRun(true);
    }
 
-   private void askCredentialsAndRun(boolean isPush){
+   private void askCredentialsAndRun(boolean isPush) {
+        String[] saved = credentialsService.load();
+        if (saved != null) {
+            gitService.setCredentials(saved[0], saved[1]);
+            try {
+                if (isPush) { gitService.push(); handleRefresh(); statusLabel.setText("Push successful."); }
+                else { gitService.pull(); handleRefresh(); statusLabel.setText("Pull successful."); }
+            } catch (Exception e) { statusLabel.setText("Error: " + e.getMessage()); }
+            return;
+        }
+
         TextInputDialog userDialog = new TextInputDialog();
         userDialog.setTitle(isPush ? "Push" : "Pull");
         userDialog.setHeaderText("GitHub username:");
         userDialog.setContentText("Username:");
         Optional<String> username = userDialog.showAndWait();
-        if(username.isEmpty()) return;
+        if (username.isEmpty()) return;
 
         TextInputDialog tokenDialog = new TextInputDialog();
         tokenDialog.setTitle(isPush ? "Push" : "Pull");
         tokenDialog.setHeaderText("Personal Access Token (PAT):");
         tokenDialog.setContentText("Token:");
         Optional<String> token = tokenDialog.showAndWait();
-        if(token.isEmpty()) return;
+        if (token.isEmpty()) return;
+
+        Alert rememberAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        rememberAlert.setTitle("Zapamti kredencijale?");
+        rememberAlert.setHeaderText(null);
+        rememberAlert.setContentText("Sačuvati username i token lokalno?");
+        rememberAlert.showAndWait().ifPresent(btn -> {
+            if (btn == ButtonType.OK) {
+                try { credentialsService.save(username.get(), token.get()); } catch (Exception ignored) {}
+            }
+        });
 
         gitService.setCredentials(username.get(), token.get());
-        try{
-            if (isPush) {
-                gitService.push();
-                handleRefresh();
-                statusLabel.setText("Push successful.");
-            }
-            else{
-                gitService.pull();
-                statusLabel.setText("Pull successful");
-            }
-        }catch(Exception e){
-            statusLabel.setText("Error: " + e.getMessage());
-        }
+        try {
+            if (isPush) { gitService.push(); handleRefresh(); statusLabel.setText("Push successful."); }
+            else { gitService.pull(); handleRefresh(); statusLabel.setText("Pull successful."); }
+        } catch (Exception e) { statusLabel.setText("Error: " + e.getMessage()); }
    }
 
    @FXML
@@ -635,6 +657,13 @@ public class MainController implements Initializable {
     }
 
     private void askCredentialsAndFetch() {
+        String[] saved = credentialsService.load();
+        if (saved != null) {
+            gitService.setCredentials(saved[0], saved[1]);
+            runFetch();
+            return;
+        }
+
         TextInputDialog userDialog = new TextInputDialog();
         userDialog.setTitle("Fetch");
         userDialog.setHeaderText("GitHub username:");
@@ -649,9 +678,22 @@ public class MainController implements Initializable {
         Optional<String> token = tokenDialog.showAndWait();
         if (token.isEmpty()) return;
 
-        gitService.setCredentials(username.get(), token.get());
-        statusLabel.setText("Fetching...");
+        Alert rememberAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        rememberAlert.setTitle("Zapamti kredencijale?");
+        rememberAlert.setHeaderText(null);
+        rememberAlert.setContentText("Sačuvati username i token lokalno?");
+        rememberAlert.showAndWait().ifPresent(btn -> {
+            if (btn == ButtonType.OK) {
+                try { credentialsService.save(username.get(), token.get()); } catch (Exception ignored) {}
+            }
+        });
 
+        gitService.setCredentials(username.get(), token.get());
+        runFetch();
+    }
+
+    private void runFetch() {
+        statusLabel.setText("Fetching...");
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -679,6 +721,16 @@ public class MainController implements Initializable {
         setRepoLoaded(false);
         updateBranchLabel();
         statusLabel.setText("Ready");
+    }
+
+    @FXML
+    private void handleClearCredentials() {
+        try {
+            credentialsService.clear();
+            statusLabel.setText("Kredencijali obrisani.");
+        } catch (Exception e) {
+            statusLabel.setText("Error: " + e.getMessage());
+        }
     }
 
     private void updateBranchLabel(){
