@@ -15,8 +15,10 @@
             <Label text="Unstaged" style="-fx-text-fill: #cdd9e5; -fx-font-size: 12;"/>
             <ListView fx:id="unstagedList" VBox.vgrow="ALWAYS"
                       style="-fx-background-color: #0a1628;"/>
-            <Button fx:id="stageBtn" text="Stage Selected" onAction="#handleStage"
-                    maxWidth="Infinity"/>
+            <HBox spacing="6">
+                <Button text="Stage Selected" onAction="#handleStage" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                <Button text="Stage All" onAction="#handleStageAll" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
         </VBox>
 
         <VBox spacing="6">

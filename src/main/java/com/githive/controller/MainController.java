@@ -182,6 +182,10 @@ public class MainController implements Initializable {
             Scene scene = new Scene(loader.load(), 700, 500);
             ChangesController ctrl = loader.getController();
             ctrl.setGitService(gitService);
+            ctrl.setOnCommitSuccess(msg -> {
+                handleRefresh();
+                statusLabel.setText("Commited: " + msg);
+            });
             Stage stage = new Stage();
             stage.setTitle("Changes");
             stage.setScene(scene);
