@@ -234,4 +234,8 @@ public class GitService {
     public void discardChanges(String path) throws Exception{
         git.checkout().addPath(path).call();
     }
+
+    public void fetch() throws GitAPIException{
+        git.fetch().setCredentialsProvider(credentials).call();
+    }
 }

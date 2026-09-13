@@ -48,6 +48,7 @@ public class MainController implements Initializable {
     @FXML private Button newBranchBtn;
     @FXML private Button newTagBtn;
     @FXML private MenuButton stashMenu;
+    @FXML private Button fetchBtn;
 
     private final GitService gitService = new GitService();
     private CommitInfo selectedCommit;
@@ -452,6 +453,42 @@ public class MainController implements Initializable {
         newBranchBtn.setDisable(!loaded);
         newTagBtn.setDisable(!loaded);
         stashMenu.setDisable(!loaded);
+        fetchBtn.setDisable(!loaded);
+    }
+
+    @FXML private void handleFetch(){
+        if(!gitService.isLoaded()) return;
+        askCredentialsAndFetch();
+    }
+
+    private void askCredentialsAndFetch() {
+        TextInputDialog userDialog = new TextInputDialog();
+        userDialog.setTitle("Fetch");
+        userDialog.setHeaderText("GitHub username:");
+        userDialog.setContentText("Username:");
+        Optional<String> username = userDialog.showAndWait();
+        if (username.isEmpty()) return;
+
+        TextInputDialog tokenDialog = new TextInputDialog();
+        tokenDialog.setTitle("Fetch");
+        tokenDialog.setHeaderText("Personal Access Token (PAT):");
+        tokenDialog.setContentText("Token:");
+        Optional<String> token = tokenDialog.showAndWait();
+        if (token.isEmpty()) return;
+
+        gitService.setCredentials(username.get(), token.get());
+        statusLabel.setText("Fetching...");
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                gitService.fetch();
+                return null;
+            }
+        };
+        task.setOnSucceeded(e -> statusLabel.setText("Fetch successful."));
+        task.setOnFailed(e -> statusLabel.setText("Error: " + task.getException().getMessage()));
+        new Thread(task).start();
     }
 
 }

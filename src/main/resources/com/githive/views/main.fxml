@@ -28,6 +28,7 @@
             </MenuButton>
             <Button fx:id="changesBtn" text="Changes" onAction="#handleShowChanges"/>
             <Separator orientation="VERTICAL"/>
+            <Button fx:id="fetchBtn" text="Fetch" onAction="#handleFetch"/>
             <Button fx:id="pullBtn" text="Pull" onAction="#handlePull"/>
             <Button fx:id="pushBtn" text="Push" onAction="#handlePush"/>
             <Separator orientation="VERTICAL"/>
