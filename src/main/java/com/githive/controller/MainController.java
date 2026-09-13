@@ -143,6 +143,51 @@ public class MainController implements Initializable {
         tagMenu.getItems().add(deleteTagItem);
         tagList.setContextMenu(tagMenu);
 
+        ContextMenu fileMenu = new ContextMenu();
+        MenuItem fileHistoryItem = new MenuItem("File History");
+        fileHistoryItem.setOnAction(e -> {
+            String selected = fileList.getSelectionModel().getSelectedItem();
+            if (selected == null) return;
+            String path = selected.substring(3);
+            try {
+                List<CommitInfo> history = gitService.getFileHistory(path);
+
+                Dialog<ButtonType> dialog = new Dialog<>();
+                dialog.setTitle("File History");
+                dialog.setHeaderText(path);
+
+                TableView<CommitInfo> historyTable = new TableView<>();
+                historyTable.setPrefSize(700, 400);
+
+                TableColumn<CommitInfo, String> hHash = new TableColumn<>("Hash");
+                hHash.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().shortHash()));
+                hHash.setPrefWidth(70);
+
+                TableColumn<CommitInfo, String> hMsg = new TableColumn<>("Message");
+                hMsg.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().message()));
+                hMsg.setPrefWidth(350);
+
+                TableColumn<CommitInfo, String> hAuthor = new TableColumn<>("Author");
+                hAuthor.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().author()));
+                hAuthor.setPrefWidth(140);
+
+                TableColumn<CommitInfo, String> hDate = new TableColumn<>("Date");
+                hDate.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().date()));
+                hDate.setPrefWidth(130);
+
+                historyTable.getColumns().addAll(hHash, hMsg, hAuthor, hDate);
+                historyTable.setItems(FXCollections.observableArrayList(history));
+
+                dialog.getDialogPane().setContent(historyTable);
+                dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+                dialog.showAndWait();
+            } catch (Exception ex) {
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
+        });
+        fileMenu.getItems().add(fileHistoryItem);
+        fileList.setContextMenu(fileMenu);
+
         ContextMenu commitMenu = new ContextMenu();
         MenuItem softReset = new MenuItem("Reset → Soft");
         MenuItem mixedReset = new MenuItem("Reset → Mixed");

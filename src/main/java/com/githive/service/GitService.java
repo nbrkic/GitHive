@@ -335,4 +335,16 @@ public class GitService {
     public void removeRemote(String name) throws Exception {
         git.remoteRemove().setRemoteName(name).call();
     }
+
+    public List<CommitInfo> getFileHistory(String filePath) throws GitAPIException {
+        List<CommitInfo> result = new ArrayList<>();
+        for (RevCommit c : git.log().addPath(filePath).call()) {
+            List<String> parents = new ArrayList<>();
+            for (RevCommit p : c.getParents()) parents.add(p.getName());
+            result.add(new CommitInfo(c.abbreviate(7).name(), c.getName(),
+                    c.getShortMessage(), c.getAuthorIdent().getName(),
+                    DATE_FMT.format(new Date((long) c.getCommitTime() * 1000)), parents));
+        }
+        return result;
+    }
 }
