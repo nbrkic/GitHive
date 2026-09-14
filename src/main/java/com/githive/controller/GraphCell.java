@@ -34,31 +34,40 @@ public class GraphCell extends TableCell<com.githive.model.CommitInfo, GraphRow>
         canvas.setWidth(width);
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, width, H);
+        gc.setLineWidth(2);
 
-        for (int[] line : row.outLines()) {
-            int from = line[0];
-            int to = line[1];
-            gc.setStroke(COLORS[from % COLORS.length]);
-            gc.setLineWidth(2);
-            double x1 = from * LANE_W + LANE_W / 2.0;
-            double x2 = to * LANE_W + LANE_W / 2.0;
-            gc.strokeLine(x1, H / 2.0, x2, H);
-        }
-
-        for (int i = 0; i < row.totalLanes(); i++) {
-            if (i == row.myLane()) continue;
-            gc.setStroke(COLORS[i % COLORS.length]);
-            gc.setLineWidth(2);
-            double x = i * LANE_W + LANE_W / 2.0;
+        // 1. Pass-through lanes — full verticals for lanes that are active above and below
+        for (int lane : row.passThroughLanes()) {
+            gc.setStroke(COLORS[lane % COLORS.length]);
+            double x = lane * LANE_W + LANE_W / 2.0;
             gc.strokeLine(x, 0, x, H);
         }
 
-        int ml = row.myLane();
-        double cx = ml * LANE_W + LANE_W / 2.0;
-        gc.setStroke(COLORS[ml % COLORS.length]);
-        gc.setLineWidth(2);
-        gc.strokeLine(cx, 0, cx, H / 2.0);
-        gc.setFill(COLORS[ml % COLORS.length]);
-        gc.fillOval(cx - 5, H / 2.0 - 5, 10, 10);
+        // 2. Outgoing lines (merge/branch) — bezier curves from dot midpoint to bottom
+        for (int[] line : row.outLines()) {
+            int from = line[0];
+            int to   = line[1];
+            gc.setStroke(COLORS[to % COLORS.length]);
+            double x1 = from * LANE_W + LANE_W / 2.0;
+            double x2 = to   * LANE_W + LANE_W / 2.0;
+            gc.beginPath();
+            gc.moveTo(x1, H / 2.0);
+            gc.bezierCurveTo(x1, H, x2, H / 2.0, x2, H);
+            gc.stroke();
+        }
+
+        // 3. myLane vertical lines (top half and/or bottom half)
+        double cx = row.myLane() * LANE_W + LANE_W / 2.0;
+        gc.setStroke(COLORS[row.myLane() % COLORS.length]);
+        if (row.myLaneWasTracked()) {
+            gc.strokeLine(cx, 0, cx, H / 2.0);
+        }
+        if (row.myLaneContinues()) {
+            gc.strokeLine(cx, H / 2.0, cx, H);
+        }
+
+        // 4. Commit dot (drawn last so it appears on top)
+        gc.setFill(COLORS[row.myLane() % COLORS.length]);
+        gc.fillOval(cx - 4, H / 2.0 - 4, 9, 9);
     }
 }
