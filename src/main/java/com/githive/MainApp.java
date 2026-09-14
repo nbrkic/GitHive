@@ -31,6 +31,10 @@ public class MainApp extends Application {
             alert.setContentText("GitHive is already open.");
             alert.getDialogPane().getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
             alert.getDialogPane().setGraphic(null);
+            Platform.runLater(() -> {
+                if (alert.getDialogPane().getScene() != null && alert.getDialogPane().getScene().getWindow() instanceof Stage s)
+                    s.getIcons().setAll(new Image(getClass().getResourceAsStream(ICON)));
+            });
             alert.showAndWait();
             Platform.exit();
             return;

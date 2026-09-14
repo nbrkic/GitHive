@@ -14,15 +14,21 @@
         <VBox spacing="10" style="-fx-padding: 14 12 12 12;">
             <Label text="Unstaged"/>
             <ListView fx:id="unstagedList" VBox.vgrow="ALWAYS"/>
-            <HBox spacing="8">
-                <Button text="Stage Selected" onAction="#handleStage" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                <Button text="Stage All" onAction="#handleStageAll" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-            </HBox>
-            <HBox spacing="8">
-                <Button text="Discard Selected" onAction="#handleDiscard" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                        style="-fx-text-fill: #f85149;"/>
-                <Button text="Ignore Selected" onAction="#handleIgnore" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-            </HBox>
+            <GridPane hgap="8" vgap="8">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                </columnConstraints>
+                <Button text="Stage Selected" onAction="#handleStage" maxWidth="Infinity"
+                        GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <Button text="Stage All" onAction="#handleStageAll" maxWidth="Infinity"
+                        GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Button text="Discard Selected" onAction="#handleDiscard" maxWidth="Infinity"
+                        style="-fx-text-fill: #f85149;"
+                        GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <Button text="Ignore Selected" onAction="#handleIgnore" maxWidth="Infinity"
+                        GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            </GridPane>
         </VBox>
 
         <VBox spacing="10" style="-fx-padding: 14 12 12 12;">

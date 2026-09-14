@@ -25,6 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.eclipse.jgit.api.ResetCommand;
 
@@ -705,15 +706,19 @@ public class MainController implements Initializable {
 
         javafx.scene.control.TextField nameField = new javafx.scene.control.TextField(gitService.getConfigName());
         javafx.scene.control.TextField emailField = new javafx.scene.control.TextField(gitService.getConfigEmail());
+        nameField.setPrefWidth(300);
+        emailField.setPrefWidth(300);
 
         javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setHgap(12);
+        grid.setVgap(12);
+        grid.setPadding(new javafx.geometry.Insets(8, 0, 8, 0));
         grid.add(new Label("Name:"), 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(new Label("Email:"), 0, 1);
         grid.add(emailField, 1, 1);
         dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().setMinWidth(460);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         dialog.showAndWait().ifPresent(btn -> {
@@ -1041,6 +1046,10 @@ public class MainController implements Initializable {
     private void theme(DialogPane p) {
         p.getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
         p.setGraphic(null);
+        Platform.runLater(() -> {
+            if (p.getScene() != null && p.getScene().getWindow() instanceof Stage s)
+                s.getIcons().setAll(new Image(getClass().getResourceAsStream("/com/githive/images/hive.png")));
+        });
     }
 
     @FXML

@@ -1,10 +1,12 @@
 package com.githive.controller;
 
 import com.githive.service.GitService;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.eclipse.jgit.api.Status;
 
@@ -165,6 +167,10 @@ public class ChangesController implements Initializable {
     private void theme(DialogPane p) {
         p.getStylesheets().add(getClass().getResource("/com/githive/css/app.css").toExternalForm());
         p.setGraphic(null);
+        Platform.runLater(() -> {
+            if (p.getScene() != null && p.getScene().getWindow() instanceof Stage s)
+                s.getIcons().setAll(new Image(getClass().getResourceAsStream("/com/githive/images/hive.png")));
+        });
     }
 
     @FXML
